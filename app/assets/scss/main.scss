@@ -1,0 +1,16 @@
+// ===========================
+//  LEAFLY — main.scss
+//  Entry point: imports all partials in order
+// ===========================
+
+// 1. Abstracts (vars, mixins, functions — no output)
+@use 'abstracts';
+
+// 2. Base (reset, custom properties, typography)
+@use 'base';
+
+// 3. Layout (container, transitions, scrollbar)
+@use 'layout';
+
+// 4. Shared components (buttons, etc.)
+@use 'components';

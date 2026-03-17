@@ -1,0 +1,49 @@
+// ===========================
+//  LEAFLY — Layout
+// ===========================
+
+@use '../abstracts' as *;
+
+// --- Container ---
+.container {
+    max-width: $container-max;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+// --- Leaf divider ---
+.leaf-divider {
+    @include flex-center;
+    gap: 1rem;
+    margin: 2rem auto;
+    color: $sage-light;
+
+    &::before,
+    &::after {
+        @include pseudo($display: block, $pos: static);
+        flex: 1;
+        height: 1px;
+    }
+
+    &::before {
+        background: linear-gradient(to right, transparent, $sage-light);
+    }
+
+    &::after {
+        background: linear-gradient(to left, transparent, $sage-light);
+    }
+}
+
+// --- Scrollbar ---
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: $cream;
+}
+
+::-webkit-scrollbar-thumb {
+    background: $blush;
+    border-radius: 3px;
+}

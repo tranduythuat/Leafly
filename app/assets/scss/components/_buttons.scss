@@ -1,0 +1,77 @@
+// ===========================
+//  LEAFLY — Buttons
+// ===========================
+
+@use '../abstracts' as *;
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.75rem;
+    border-radius: 50px;
+    @include font-sans(0.875rem, 500);
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    border: none;
+
+    // --- Sizes ---
+    &--sm {
+        padding: 0.5rem 1.25rem;
+        font-size: 0.8rem;
+    }
+
+    &--lg {
+        padding: 1rem 2.5rem;
+        font-size: 1rem;
+    }
+
+    // --- Variants ---
+    &-primary {
+        background: $sage;
+        color: $white;
+
+        &:hover {
+            background: $sage-dark;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba($sage, 0.4);
+        }
+    }
+
+    &-outline {
+        background: transparent;
+        color: $text-dark;
+        border: 1.5px solid $text-dark;
+
+        &:hover {
+            background: $text-dark;
+            color: $white;
+            transform: translateY(-2px);
+        }
+    }
+
+    &-rose {
+        background: $dusty-rose;
+        color: $white;
+
+        &:hover {
+            background: $terracotta;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba($dusty-rose, 0.4);
+        }
+    }
+
+    &-ghost {
+        background: transparent;
+        color: $sage;
+        border: 1.5px solid $sage;
+
+        &:hover {
+            background: $sage;
+            color: $white;
+            transform: translateY(-2px);
+        }
+    }
+}

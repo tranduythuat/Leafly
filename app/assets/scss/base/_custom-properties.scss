@@ -1,0 +1,46 @@
+// ===========================
+//  LEAFLY — CSS Custom Properties
+//  Exposes SCSS vars as CSS vars for runtime use in Vue components
+// ===========================
+
+@use '../abstracts' as *;
+
+:root {
+    // Colors
+    --cream: #{$cream};
+    --cream-dark: #{$cream-dark};
+    --parchment: #{$parchment};
+    --sage: #{$sage};
+    --sage-light: #{$sage-light};
+    --sage-dark: #{$sage-dark};
+    --dusty-rose: #{$dusty-rose};
+    --rose-light: #{$rose-light};
+    --blush: #{$blush};
+    --terracotta: #{$terracotta};
+    --brown-soft: #{$brown-soft};
+    --text-dark: #{$text-dark};
+    --text-mid: #{$text-mid};
+    --text-light: #{$text-light};
+    --white: #{$white};
+    --olive: #{$olive};
+
+    // Typography
+    --font-display: #{$font-display};
+    --font-serif: #{$font-serif};
+    --font-sans: #{$font-sans};
+
+    // Spacing
+    --section-py: #{$section-py};
+    --container-max: #{$container-max};
+
+    // Shadows
+    --shadow-soft: #{$shadow-soft};
+    --shadow-card: #{$shadow-card};
+    --shadow-lift: #{$shadow-lift};
+
+    // Radius
+    --radius-sm: #{$radius-sm};
+    --radius-md: #{$radius-md};
+    --radius-lg: #{$radius-lg};
+    --radius-xl: #{$radius-xl};
+}

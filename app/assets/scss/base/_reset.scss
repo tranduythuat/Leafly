@@ -1,0 +1,44 @@
+// ===========================
+//  LEAFLY — Reset
+// ===========================
+
+@use '../abstracts' as *;
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    @include font-sans;
+    background-color: $cream;
+    color: $text-dark;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+}
+
+img,
+video {
+    max-width: 100%;
+    display: block;
+}
+
+a {
+    color: inherit;
+}
+
+button {
+    font-family: inherit;
+}
+
+ul,
+ol {
+    list-style: none;
+}

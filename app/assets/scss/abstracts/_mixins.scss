@@ -1,0 +1,101 @@
+// ===========================
+//  LEAFLY — Mixins
+// ===========================
+
+// --- Responsive breakpoints ---
+@mixin respond-to($bp) {
+    @if $bp ==xs {
+        @media (max-width: $bp-xs) {
+            @content;
+        }
+    }
+
+    @else if $bp ==sm {
+        @media (max-width: $bp-sm) {
+            @content;
+        }
+    }
+
+    @else if $bp ==md {
+        @media (max-width: $bp-md) {
+            @content;
+        }
+    }
+
+    @else if $bp ==lg {
+        @media (max-width: $bp-lg) {
+            @content;
+        }
+    }
+
+    @else if $bp ==xl {
+        @media (max-width: $bp-xl) {
+            @content;
+        }
+    }
+}
+
+// --- Flex helpers ---
+@mixin flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@mixin flex-between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+// --- Card hover lift ---
+@mixin hover-lift($y: -4px, $shadow: $shadow-card) {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+    &:hover {
+        transform: translateY($y);
+        box-shadow: $shadow;
+    }
+}
+
+// --- Section padding ---
+@mixin section-padding {
+    padding: $section-py 0;
+}
+
+// --- Typography helpers ---
+@mixin font-display($size: 1rem, $weight: 500) {
+    font-family: $font-display;
+    font-size: $size;
+    font-weight: $weight;
+}
+
+@mixin font-serif($size: 1rem) {
+    font-family: $font-serif;
+    font-size: $size;
+}
+
+@mixin font-sans($size: 1rem, $weight: 400) {
+    font-family: $font-sans;
+    font-size: $size;
+    font-weight: $weight;
+}
+
+// --- Text truncate ---
+@mixin truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+// --- Pseudo-element base ---
+@mixin pseudo($display: block, $pos: absolute, $content: '') {
+    content: $content;
+    display: $display;
+    position: $pos;
+}
+
+// --- Gradient background ---
+@mixin gradient-bg($from, $to, $deg: 135deg) {
+    background: linear-gradient($deg, $from 0%, $to 100%);
+}

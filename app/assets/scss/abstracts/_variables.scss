@@ -1,0 +1,48 @@
+// ===========================
+//  LEAFLY — Variables
+// ===========================
+
+// --- Colors ---
+$cream:        #F7F2EA;
+$cream-dark:   #EDE6D8;
+$parchment:    #F0E8D8;
+$sage:         #6B8C6E;
+$sage-light:   #8FAF92;
+$sage-dark:    #4A6B4D;
+$dusty-rose:   #C4876A;
+$rose-light:   #DBA98A;
+$blush:        #E8C4A8;
+$terracotta:   #B5694A;
+$brown-soft:   #8B6B52;
+$text-dark:    #2C2416;
+$text-mid:     #5C4A32;
+$text-light:   #8B7355;
+$white:        #FFFDF8;
+$olive:        #7A8C5A;
+
+// --- Typography ---
+$font-display: 'Playfair Display', 'Georgia', serif;
+$font-serif:   'Cormorant Garamond', 'Georgia', serif;
+$font-sans:    'Jost', 'Helvetica Neue', sans-serif;
+
+// --- Spacing ---
+$section-py:     5rem;
+$container-max:  1200px;
+
+// --- Shadows ---
+$shadow-soft: 0 4px 24px rgba(44, 36, 22, 0.08);
+$shadow-card: 0 8px 40px rgba(44, 36, 22, 0.12);
+$shadow-lift: 0 20px 60px rgba(44, 36, 22, 0.18);
+
+// --- Border radius ---
+$radius-sm:  6px;
+$radius-md:  12px;
+$radius-lg:  20px;
+$radius-xl:  32px;
+
+// --- Breakpoints ---
+$bp-xs: 480px;
+$bp-sm: 600px;
+$bp-md: 768px;
+$bp-lg: 900px;
+$bp-xl: 1200px;

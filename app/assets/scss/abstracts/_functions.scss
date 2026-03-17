@@ -1,0 +1,18 @@
+// --- Rem converter (base 16px) ---
+@function rem($px) {
+    @return #{$px / 16}rem;
+}
+
+// --- Fluid type (clamp shorthand) ---
+@function fluid($min, $max, $min-vw: 360px, $max-vw: 1280px) {
+    $slope: (
+        $max - $min) / ($max-vw - $min-vw
+    );
+$intercept: $min - $slope * $min-vw;
+@return clamp(#{$min}px, #{$slope * 100}vw + #{$intercept}px, #{$max}px);
+}
+
+// --- Alpha color (adds opacity to any color) ---
+@function alpha($color, $opacity) {
+    @return rgba($color, $opacity);
+}
