@@ -1,6 +1,7 @@
 // ===========================
 //  LEAFLY — Mixins
 // ===========================
+@use 'variables' as *;
 
 // --- Responsive breakpoints ---
 @mixin respond-to($bp) {

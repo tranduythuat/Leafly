@@ -11,14 +11,13 @@ useSeoMeta({
 
 <template>
   <div>
-    <h1>Hellp</h1>
-    <!-- <HomeHeroSection />
+    <HomeHeroSection />
     <HomeTemplateSection />
     <HomeHowItWorks />
     <HomeFeatureSection />
     <HomePricingSection />
     <HomeCTASection />
     <HomeTestimonialsSection />
-    <HomeFooterSection /> -->
+    <HomeFooterSection />
   </div>
 </template>

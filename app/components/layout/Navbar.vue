@@ -18,9 +18,7 @@
       <!-- Actions -->
       <div class="navbar__actions">
         <NuxtLink to="/login" class="btn btn-outline btn--sm">Log in</NuxtLink>
-        <NuxtLink to="/signup" class="btn btn-primary btn--sm"
-          >Sign up</NuxtLink
-        >
+        <NuxtLink to="/signup" class="btn btn-primary btn--sm">Sign up</NuxtLink>
       </div>
 
       <!-- Hamburger -->
@@ -36,14 +34,14 @@
 </template>
 
 <script setup>
-const isScrolled = ref(false);
-const menuOpen = ref(false);
+const isScrolled = ref(false)
+const menuOpen = ref(false)
 
 onMounted(() => {
-  window.addEventListener("scroll", () => {
-    isScrolled.value = window.scrollY > 40;
-  });
-});
+  window.addEventListener('scroll', () => {
+    isScrolled.value = window.scrollY > 40
+  })
+})
 </script>
 
 <style scoped lang="scss">
@@ -57,7 +55,6 @@ onMounted(() => {
   transition: all 0.35s ease;
 
   &--scrolled {
-    // background: rgba($cream, 0.95);
     backdrop-filter: blur(12px);
     padding: 0.75rem 0;
     box-shadow: 0 2px 20px rgba($text-dark, 0.08);
@@ -78,9 +75,7 @@ onMounted(() => {
     letter-spacing: -0.02em;
     flex-shrink: 0;
 
-    &-leaf {
-      font-size: 1.2rem;
-    }
+    &-leaf { font-size: 1.2rem; }
   }
 
   &__links {
@@ -88,12 +83,6 @@ onMounted(() => {
     align-items: center;
     gap: 2rem;
     margin-left: auto;
-
-    &--open {
-      @include respond-to(md) {
-        display: flex;
-      }
-    }
   }
 
   &__link {
@@ -136,8 +125,10 @@ onMounted(() => {
     }
   }
 
+  // --- Mobile ---
   @include respond-to(md) {
     &__links {
+      // Ẩn mặc định trên mobile
       display: none;
       position: absolute;
       top: 100%;
@@ -149,15 +140,16 @@ onMounted(() => {
       gap: 1.25rem;
       border-bottom: 1px solid $cream-dark;
       align-items: flex-start;
+
+      // Hiện khi có class --open
+      &--open {
+        display: flex;
+      }
     }
 
-    &__actions {
-      display: none;
-    }
+    &__actions { display: none; }
 
-    &__hamburger {
-      display: flex;
-    }
+    &__hamburger { display: flex; }
   }
 }
 </style>
