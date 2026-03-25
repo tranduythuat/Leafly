@@ -1,0 +1,1301 @@
+<template>
+  <div id="app" class="editor-root">
+
+    <!-- ==================== TOP NAV ==================== -->
+    <header class="editor-nav">
+      <div class="editor-nav__left">
+        <!-- Logo -->
+        <NuxtLink to="/" class="editor-nav__logo">
+          <svg width="26" height="26" viewBox="0 0 32 32" fill="none">
+            <path d="M16 4C12 4 8 8 8 14c0 4 2 7 4 9l2 3c.5.8 1.5 1.2 2 1.2s1.5-.4 2-1.2l2-3c2-2 4-5 4-9 0-6-4-10-8-10z" fill="#95a87d" opacity="0.3"/>
+            <path d="M16 6c-3 0-6 3.5-6 8.5 0 3.2 1.6 5.8 3.2 7.5L16 26l2.8-4c1.6-1.7 3.2-4.3 3.2-7.5C22 9.5 19 6 16 6z" fill="#7a8f62"/>
+            <circle cx="16" cy="14" r="2.5" fill="#fdfcf9"/>
+          </svg>
+          <span class="editor-nav__brand">Leafly</span>
+        </NuxtLink>
+
+        <div class="editor-nav__divider"></div>
+
+        <!-- Undo / Redo -->
+        <div class="editor-nav__btn-group">
+          <button @click="undo" title="Undo" class="editor-nav__icon-btn">
+            <Icon name="lucide:undo-2" size="15" />
+          </button>
+          <button @click="redo" title="Redo" class="editor-nav__icon-btn">
+            <Icon name="lucide:redo-2" size="15" />
+          </button>
+        </div>
+
+        <div class="editor-nav__divider"></div>
+
+        <!-- Preview mode toggle -->
+        <div class="editor-nav__preview-toggle">
+          <button
+            :class="['preview-btn', previewMode === 'desktop' && 'preview-btn--active']"
+            @click="setPreviewMode('desktop')"
+          >
+            <Icon name="lucide:monitor" size="13" /> Desktop
+          </button>
+          <button
+            :class="['preview-btn', previewMode === 'mobile' && 'preview-btn--active']"
+            @click="setPreviewMode('mobile')"
+          >
+            <Icon name="lucide:smartphone" size="13" /> Mobile
+          </button>
+        </div>
+      </div>
+
+      <div class="editor-nav__right">
+        <!-- Auto-save indicator -->
+        <div class="editor-nav__save-status">
+          <span class="save-dot" :class="saveStatus"></span>
+          <span>{{ saveLabel }}</span>
+        </div>
+
+        <button class="editor-nav__action-btn" @click="showPreviewModal = true">
+          <Icon name="lucide:eye" size="14" /> Preview
+        </button>
+        <button class="editor-nav__action-btn" @click="triggerSave">
+          <Icon name="lucide:save" size="14" /> Save
+        </button>
+        <button class="editor-nav__publish-btn" @click="showToast('Your invitation is live! 🎉')">
+          <Icon name="lucide:globe" size="14" /> Publish
+        </button>
+      </div>
+    </header>
+
+    <!-- ==================== MAIN AREA ==================== -->
+    <div class="editor-body">
+
+      <!-- ========== LEFT SIDEBAR ========== -->
+      <aside class="editor-sidebar editor-sidebar--left">
+
+        <!-- Template Presets -->
+        <div class="sidebar-section">
+          <button class="sidebar-section__toggle" @click="toggleSection('presets')">
+            <span><Icon name="lucide:palette" size="13" /> Templates</span>
+            <Icon name="lucide:chevron-down" size="13" :class="collapsed.presets && 'rotated'" />
+          </button>
+          <div class="sidebar-section__body" :class="collapsed.presets && 'collapsed'">
+            <div class="preset-grid">
+              <div
+                v-for="preset in presets"
+                :key="preset.key"
+                class="preset-card"
+                :class="currentTheme === preset.key && 'preset-card--active'"
+                @click="switchTheme(preset.key)"
+              >
+                <div class="preset-card__swatch" :style="{ background: preset.gradient }"></div>
+                <div class="preset-card__label">{{ preset.label }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Text -->
+        <div class="sidebar-section">
+          <button class="sidebar-section__toggle" @click="toggleSection('text')">
+            <span><Icon name="lucide:type" size="13" /> Text</span>
+            <Icon name="lucide:chevron-down" size="13" :class="collapsed.text && 'rotated'" />
+          </button>
+          <div class="sidebar-section__body" :class="collapsed.text && 'collapsed'">
+            <div
+              v-for="comp in textComponents"
+              :key="comp.type"
+              class="comp-card"
+              draggable="true"
+              @dragstart="onDragStart($event, comp.type)"
+            >
+              <div class="comp-card__icon comp-card__icon--sage">{{ comp.icon }}</div>
+              <div>
+                <div class="comp-card__title">{{ comp.label }}</div>
+                <div class="comp-card__sub">{{ comp.sub }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Decorations -->
+        <div class="sidebar-section">
+          <button class="sidebar-section__toggle" @click="toggleSection('decorations')">
+            <span><Icon name="lucide:flower-2" size="13" /> Decorations</span>
+            <Icon name="lucide:chevron-down" size="13" :class="collapsed.decorations && 'rotated'" />
+          </button>
+          <div class="sidebar-section__body" :class="collapsed.decorations && 'collapsed'">
+            <div class="deco-grid">
+              <div
+                v-for="deco in decorations"
+                :key="deco.type"
+                class="deco-card"
+                draggable="true"
+                :title="deco.label"
+                @dragstart="onDragStart($event, deco.type)"
+              >
+                {{ deco.emoji }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Components -->
+        <div class="sidebar-section">
+          <button class="sidebar-section__toggle" @click="toggleSection('components')">
+            <span><Icon name="lucide:layout" size="13" /> Components</span>
+            <Icon name="lucide:chevron-down" size="13" :class="collapsed.components && 'rotated'" />
+          </button>
+          <div class="sidebar-section__body" :class="collapsed.components && 'collapsed'">
+            <div
+              v-for="comp in blockComponents"
+              :key="comp.type"
+              class="comp-card"
+              draggable="true"
+              @dragstart="onDragStart($event, comp.type)"
+            >
+              <div class="comp-card__icon" :class="comp.iconClass">
+                <Icon :name="comp.icon" size="14" />
+              </div>
+              <div>
+                <div class="comp-card__title">{{ comp.label }}</div>
+                <div class="comp-card__sub">{{ comp.sub }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </aside>
+
+      <!-- ========== CENTER CANVAS ========== -->
+      <main
+        class="editor-canvas"
+        @click="handleCanvasClick"
+        @dragover.prevent
+        @drop="onCanvasDrop"
+      >
+        <div
+          id="canvas-frame"
+          :class="['canvas-frame', previewMode === 'mobile' ? 'canvas-frame--mobile' : 'canvas-frame--desktop']"
+        >
+          <div id="canvas-sections">
+            <!-- Sections rendered here via v-html for contenteditable support -->
+            <div
+              v-for="(section, idx) in sections"
+              :key="section.id"
+              class="canvas-section"
+              :class="{ dragging: dragIdx === idx, 'drag-over': dragOverIdx === idx }"
+              draggable="true"
+              @dragstart="onSectionDragStart($event, idx)"
+              @dragover.prevent="onSectionDragOver($event, idx)"
+              @drop.prevent.stop="onSectionDrop($event, idx)"
+              @dragend="onSectionDragEnd"
+            >
+              <!-- Drag handle -->
+              <div class="drag-handle">
+                <Icon name="lucide:grip-vertical" size="12" class="drag-handle__icon" />
+              </div>
+              <!-- Section content -->
+              <div
+                class="canvas-element"
+                :class="selectedIdx === idx && 'selected'"
+                :data-type="section.type"
+                v-html="section.html"
+                @click.stop="selectSection(idx, $event)"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- ========== RIGHT SIDEBAR (Properties) ========== -->
+      <aside
+        class="editor-sidebar editor-sidebar--right"
+        :class="selectedIdx !== null && 'editor-sidebar--visible'"
+      >
+        <template v-if="selectedIdx !== null">
+          <div class="props-header">
+            <div class="props-header__icon"><Icon name="lucide:settings-2" size="12" /></div>
+            <span class="props-header__label">{{ sections[selectedIdx]?.type }} Properties</span>
+          </div>
+
+          <!-- Typography -->
+          <div class="props-group">
+            <div class="props-group__title">Typography</div>
+            <label class="props-label">Font Family
+              <select class="props-select" @change="changePropFont($event.target.value)">
+                <option value="'Cormorant Garamond', serif">Cormorant Garamond</option>
+                <option value="'Playfair Display', serif">Playfair Display</option>
+                <option value="'DM Sans', sans-serif">DM Sans</option>
+                <option value="Georgia, serif">Georgia</option>
+              </select>
+            </label>
+            <div class="props-row">
+              <label class="props-label">Size
+                <input class="props-input" type="number" value="16" min="8" max="120"
+                  @change="changePropSize($event.target.value)" />
+              </label>
+              <label class="props-label">Weight
+                <select class="props-select" @change="changePropWeight($event.target.value)">
+                  <option value="300">Light</option>
+                  <option value="400" selected>Regular</option>
+                  <option value="500">Medium</option>
+                  <option value="600">Semibold</option>
+                  <option value="700">Bold</option>
+                </select>
+              </label>
+            </div>
+            <label class="props-label">Letter Spacing
+              <input class="props-range" type="range" min="-2" max="10" value="0" step="0.5"
+                @change="changePropSpacing($event.target.value)" />
+            </label>
+          </div>
+
+          <!-- Colors -->
+          <div class="props-group">
+            <div class="props-group__title">Colors</div>
+            <label class="props-label">Text Color
+              <div class="color-row">
+                <input class="color-picker" type="color" value="#36402d"
+                  @change="changePropTextColor($event.target.value)" />
+                <div class="color-swatches">
+                  <div v-for="c in textSwatches" :key="c" class="color-swatch" :style="{ background: c }"
+                    @click="changePropTextColor(c)"></div>
+                </div>
+              </div>
+            </label>
+            <label class="props-label">Background
+              <div class="color-row">
+                <input class="color-picker" type="color" value="#ffffff"
+                  @change="changePropBgColor($event.target.value)" />
+                <div class="color-swatches">
+                  <div v-for="c in bgSwatches" :key="c" class="color-swatch" :style="{ background: c }"
+                    @click="changePropBgColor(c)"></div>
+                </div>
+              </div>
+            </label>
+          </div>
+
+          <!-- Layout -->
+          <div class="props-group">
+            <div class="props-group__title">Layout</div>
+            <label class="props-label">Alignment
+              <div class="align-btns">
+                <button class="align-btn" @click="changePropAlign('left')">
+                  <Icon name="lucide:align-left" size="13" />
+                </button>
+                <button class="align-btn align-btn--active" @click="changePropAlign('center')">
+                  <Icon name="lucide:align-center" size="13" />
+                </button>
+                <button class="align-btn" @click="changePropAlign('right')">
+                  <Icon name="lucide:align-right" size="13" />
+                </button>
+              </div>
+            </label>
+            <div class="props-row">
+              <label class="props-label">Padding V
+                <input class="props-input" type="number" value="48" min="0" max="120" step="4"
+                  @change="changePropPadding('v', $event.target.value)" />
+              </label>
+              <label class="props-label">Padding H
+                <input class="props-input" type="number" value="40" min="0" max="120" step="4"
+                  @change="changePropPadding('h', $event.target.value)" />
+              </label>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="props-actions">
+            <button class="props-btn props-btn--secondary" @click="duplicateSelected">
+              <Icon name="lucide:copy" size="12" /> Duplicate
+            </button>
+            <button class="props-btn props-btn--danger" @click="deleteSelected">
+              <Icon name="lucide:trash-2" size="12" /> Delete
+            </button>
+          </div>
+        </template>
+      </aside>
+
+    </div>
+
+    <!-- ========== QUICK TOOLBAR (floating) ========== -->
+    <div
+      v-if="quickToolbar.visible"
+      class="quick-toolbar"
+      :style="{ left: quickToolbar.x + 'px', top: quickToolbar.y + 'px' }"
+    >
+      <button class="qt-btn" title="Bold" @click="execFormat('bold')"><Icon name="lucide:bold" size="14" /></button>
+      <button class="qt-btn" title="Italic" @click="execFormat('italic')"><Icon name="lucide:italic" size="14" /></button>
+      <button class="qt-btn" title="Underline" @click="execFormat('underline')"><Icon name="lucide:underline" size="14" /></button>
+      <div class="qt-divider"></div>
+      <button class="qt-btn" @click="changePropAlign('left')"><Icon name="lucide:align-left" size="14" /></button>
+      <button class="qt-btn" @click="changePropAlign('center')"><Icon name="lucide:align-center" size="14" /></button>
+      <button class="qt-btn" @click="changePropAlign('right')"><Icon name="lucide:align-right" size="14" /></button>
+      <div class="qt-divider"></div>
+      <button class="qt-btn" @click="duplicateSelected"><Icon name="lucide:copy" size="14" /></button>
+      <button class="qt-btn qt-btn--danger" @click="deleteSelected"><Icon name="lucide:trash-2" size="14" /></button>
+    </div>
+
+    <!-- ========== TOAST ========== -->
+    <div class="toast-container">
+      <TransitionGroup name="toast">
+        <div v-for="t in toasts" :key="t.id" class="toast">{{ t.msg }}</div>
+      </TransitionGroup>
+    </div>
+
+    <!-- ========== PREVIEW MODAL ========== -->
+    <Transition name="modal">
+      <div v-if="showPreviewModal" class="modal-overlay" @click.self="showPreviewModal = false">
+        <div class="modal">
+          <div class="modal__header">
+            <span class="modal__title">Invitation Preview</span>
+            <button class="modal__close" @click="showPreviewModal = false">
+              <Icon name="lucide:x" size="18" />
+            </button>
+          </div>
+          <div class="modal__body">
+            <div v-for="section in sections" :key="section.id" v-html="section.html"></div>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+  </div>
+</template>
+
+<script setup>
+definePageMeta({ layout: 'editor' })
+
+// ==================== STATE ====================
+const previewMode = ref('desktop')
+const currentTheme = ref('garden')
+const selectedIdx = ref(null)
+const dragIdx = ref(null)
+const dragOverIdx = ref(null)
+const showPreviewModal = ref(false)
+const saveStatus = ref('pulse')
+const saveLabel = ref('Auto-saved')
+const toasts = ref([])
+const quickToolbar = ref({ visible: false, x: 0, y: 0 })
+const collapsed = reactive({ presets: false, text: false, images: false, decorations: false, components: false })
+
+// Undo/Redo stacks
+const undoStack = ref([])
+const redoStack = ref([])
+
+// ==================== STATIC DATA ====================
+const presets = [
+  { key: 'garden', label: 'Garden', gradient: 'linear-gradient(135deg, #d5dbca, #95a87d)' },
+  { key: 'blush',  label: 'Blush',  gradient: 'linear-gradient(135deg, #fbe8e4, #e99482)' },
+  { key: 'classic',label: 'Classic',gradient: 'linear-gradient(135deg, #e8e4db, #bfb6a5)' },
+]
+
+const textComponents = [
+  { type: 'heading',   icon: 'H', label: 'Heading',   sub: 'Elegant serif title' },
+  { type: 'paragraph', icon: '¶', label: 'Paragraph', sub: 'Body text block' },
+]
+
+const decorations = [
+  { type: 'deco-leaf',    emoji: '🌿', label: 'Leaf' },
+  { type: 'deco-flower',  emoji: '🌸', label: 'Flower' },
+  { type: 'deco-rose',    emoji: '🌹', label: 'Rose' },
+  { type: 'deco-vine',    emoji: '🍃', label: 'Vine' },
+]
+
+const blockComponents = [
+  { type: 'comp-rsvp',     icon: 'lucide:mail',     iconClass: 'comp-card__icon--blush', label: 'RSVP Form',    sub: 'Guest response card' },
+  { type: 'comp-timeline', icon: 'lucide:clock',    iconClass: 'comp-card__icon--sage',  label: 'Timeline',     sub: 'Event schedule' },
+  { type: 'comp-map',      icon: 'lucide:map-pin',  iconClass: 'comp-card__icon--sage',  label: 'Venue Map',    sub: 'Location details' },
+  { type: 'comp-gallery',  icon: 'lucide:grid-3x3', iconClass: 'comp-card__icon--blush', label: 'Photo Gallery',sub: 'Image grid' },
+]
+
+const textSwatches = ['#36402d', '#7a8f62', '#e99482', '#a89d8a']
+const bgSwatches   = ['#ffffff', '#f6f7f4', '#fdf5f3', '#f4f0e3']
+
+// ==================== SECTIONS ====================
+const sections = ref([
+  {
+    id: 'hero', type: 'hero',
+    html: `
+      <div style="background:linear-gradient(135deg,#eaede4 0%,#f4f0e3 50%,#fbe8e4 100%);padding:60px 40px;text-align:center;position:relative;overflow:hidden;">
+        <svg style="position:absolute;top:0;left:0;opacity:0.12;pointer-events:none;" width="120" height="120" viewBox="0 0 120 120">
+          <path d="M0 0 C30 10,50 30,40 60 C30 40,10 30,0 0Z" fill="#7a8f62"/>
+          <path d="M0 0 C15 25,25 50,20 80 C15 50,5 25,0 0Z" fill="#95a87d"/>
+          <circle cx="25" cy="25" r="4" fill="#e99482" opacity="0.6"/>
+        </svg>
+        <div style="color:#7a8f62;font-size:11px;letter-spacing:0.3em;text-transform:uppercase;margin-bottom:1rem;font-weight:500;">We're Getting Married</div>
+        <h1 contenteditable="true" style="font-family:'Cormorant Garamond',serif;font-size:3rem;font-weight:300;color:#36402d;line-height:1.15;margin-bottom:0.5rem;letter-spacing:0.02em;">Amelia &amp; Julian</h1>
+        <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin:1rem 0;">
+          <div style="width:48px;border-top:1px solid #95a87d;"></div>
+          <span style="color:#a89d8a;font-size:1.2rem;">✿</span>
+          <div style="width:48px;border-top:1px solid #95a87d;"></div>
+        </div>
+        <p contenteditable="true" style="font-family:'Cormorant Garamond',serif;font-size:1.25rem;color:#62744d;font-style:italic;margin-bottom:0.25rem;">Saturday, June Twenty-First</p>
+        <p contenteditable="true" style="color:#a89d8a;font-size:0.8rem;letter-spacing:0.1em;">Two Thousand Twenty-Five · Rose Garden Estate</p>
+        <div style="margin-top:2rem;">
+          <div contenteditable="true" style="font-family:'Cormorant Garamond',serif;font-size:6rem;font-weight:300;color:#95a87d;line-height:1;opacity:0.4;">142</div>
+          <div style="color:#a89d8a;font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;margin-top:-0.5rem;">Days to Go</div>
+        </div>
+      </div>
+    `
+  },
+  {
+    id: 'story', type: 'story',
+    html: `
+      <div style="padding:48px 40px;text-align:center;background:white;">
+        <div style="color:#a89d8a;font-size:11px;letter-spacing:0.3em;text-transform:uppercase;margin-bottom:0.5rem;font-weight:500;">Our Story</div>
+        <h2 contenteditable="true" style="font-family:'Cormorant Garamond',serif;font-size:2rem;color:#36402d;margin-bottom:1rem;">How It All Began</h2>
+        <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:1.5rem;">
+          <div style="width:32px;border-top:1px solid #d5dbca;"></div>
+          <span style="color:#f2b8ab;">❀</span>
+          <div style="width:32px;border-top:1px solid #d5dbca;"></div>
+        </div>
+        <p contenteditable="true" style="color:#62744d;font-size:0.875rem;line-height:1.75;max-width:420px;margin:0 auto;">We met on a rainy afternoon in September at a small bookshop downtown. What started as a conversation about our favorite novels turned into coffee, then dinner, and then a lifetime of adventures together.</p>
+      </div>
+    `
+  },
+  {
+    id: 'details', type: 'details',
+    html: `
+      <div style="padding:48px 40px;background:linear-gradient(to bottom,#f6f7f4,#fdfcf9);">
+        <div style="text-align:center;margin-bottom:2rem;">
+          <div style="color:#a89d8a;font-size:11px;letter-spacing:0.3em;text-transform:uppercase;margin-bottom:0.5rem;font-weight:500;">The Celebration</div>
+          <h2 contenteditable="true" style="font-family:'Cormorant Garamond',serif;font-size:2rem;color:#36402d;">Event Details</h2>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:480px;margin:0 auto;">
+          <div style="background:rgba(255,255,255,0.7);border-radius:16px;padding:20px;text-align:center;border:1px solid rgba(213,219,202,0.4);">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:#36402d;font-weight:500;margin-bottom:4px;">Ceremony</div>
+            <div contenteditable="true" style="color:#a89d8a;font-size:0.75rem;margin-bottom:8px;">3:00 PM</div>
+            <div contenteditable="true" style="color:#62744d;font-size:0.75rem;line-height:1.5;">Rose Garden Chapel<br>123 Bloom Lane</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.7);border-radius:16px;padding:20px;text-align:center;border:1px solid rgba(213,219,202,0.4);">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:#36402d;font-weight:500;margin-bottom:4px;">Reception</div>
+            <div contenteditable="true" style="color:#a89d8a;font-size:0.75rem;margin-bottom:8px;">5:30 PM</div>
+            <div contenteditable="true" style="color:#62744d;font-size:0.75rem;line-height:1.5;">The Grand Pavilion<br>456 Garden Way</div>
+          </div>
+        </div>
+      </div>
+    `
+  },
+  {
+    id: 'rsvp', type: 'rsvp',
+    html: `
+      <div style="padding:48px 40px;text-align:center;background:white;">
+        <div style="color:#a89d8a;font-size:11px;letter-spacing:0.3em;text-transform:uppercase;margin-bottom:0.5rem;font-weight:500;">Kindly Respond</div>
+        <h2 contenteditable="true" style="font-family:'Cormorant Garamond',serif;font-size:2rem;color:#36402d;margin-bottom:1.5rem;">RSVP</h2>
+        <form onsubmit="event.preventDefault()" style="max-width:280px;margin:0 auto;display:flex;flex-direction:column;gap:10px;">
+          <input type="text" placeholder="Your full name" style="width:100%;padding:10px 16px;border-radius:12px;border:1px solid #d5dbca;background:#fdfcf9;font-size:0.875rem;color:#36402d;box-sizing:border-box;outline:none;">
+          <input type="email" placeholder="Email address" style="width:100%;padding:10px 16px;border-radius:12px;border:1px solid #d5dbca;background:#fdfcf9;font-size:0.875rem;color:#36402d;box-sizing:border-box;outline:none;">
+          <div style="display:flex;gap:8px;">
+            <button type="button" style="flex:1;padding:10px;border-radius:12px;border:1px solid #d5dbca;font-size:0.875rem;color:#62744d;background:white;cursor:pointer;">Accepts</button>
+            <button type="button" style="flex:1;padding:10px;border-radius:12px;border:1px solid #d5dbca;font-size:0.875rem;color:#62744d;background:white;cursor:pointer;">Declines</button>
+          </div>
+          <button type="submit" style="width:100%;padding:10px;border-radius:12px;background:#62744d;color:white;font-size:0.875rem;font-weight:500;border:none;cursor:pointer;">Send RSVP</button>
+        </form>
+      </div>
+    `
+  }
+])
+
+// ==================== SECTION HELPERS ====================
+function getSelectedEl() {
+  if (selectedIdx.value === null) return null
+  return document.querySelectorAll('.canvas-element')[selectedIdx.value]
+}
+
+function selectSection(idx, event) {
+  selectedIdx.value = idx
+  const el = event.currentTarget
+  const rect = el.getBoundingClientRect()
+  quickToolbar.value = {
+    visible: true,
+    x: rect.left + rect.width / 2 - 140,
+    y: rect.top - 44
+  }
+  saveState()
+}
+
+function handleCanvasClick(event) {
+  if (event.target.id === 'canvas-frame' || event.target.classList.contains('editor-canvas')) {
+    selectedIdx.value = null
+    quickToolbar.value.visible = false
+  }
+}
+
+// ==================== PROP CHANGES ====================
+function changePropFont(val) {
+  const el = getSelectedEl(); if (el) el.style.fontFamily = val
+}
+function changePropSize(val) {
+  const el = getSelectedEl()
+  if (!el) return
+  const target = el.querySelector('[contenteditable], h1, h2, p')
+  if (target) target.style.fontSize = val + 'px'
+}
+function changePropWeight(val) {
+  const el = getSelectedEl(); if (el) el.style.fontWeight = val
+}
+function changePropSpacing(val) {
+  const el = getSelectedEl(); if (el) el.style.letterSpacing = val + 'px'
+}
+function changePropTextColor(val) {
+  const el = getSelectedEl(); if (el) el.style.color = val
+}
+function changePropBgColor(val) {
+  const el = getSelectedEl(); if (el) el.style.background = val
+}
+function changePropAlign(val) {
+  const el = getSelectedEl(); if (el) el.style.textAlign = val
+}
+function changePropPadding(dir, val) {
+  const el = getSelectedEl()
+  if (!el) return
+  if (dir === 'v') { el.style.paddingTop = val + 'px'; el.style.paddingBottom = val + 'px' }
+  else { el.style.paddingLeft = val + 'px'; el.style.paddingRight = val + 'px' }
+}
+
+function execFormat(cmd) { document.execCommand(cmd, false, null) }
+
+// ==================== SECTION ACTIONS ====================
+function duplicateSelected() {
+  if (selectedIdx.value === null) return
+  const clone = { ...sections.value[selectedIdx.value], id: Date.now().toString() }
+  sections.value.splice(selectedIdx.value + 1, 0, clone)
+  showToast('Section duplicated')
+  saveState()
+}
+
+function deleteSelected() {
+  if (selectedIdx.value === null) return
+  sections.value.splice(selectedIdx.value, 1)
+  selectedIdx.value = null
+  quickToolbar.value.visible = false
+  showToast('Section removed')
+  saveState()
+}
+
+// ==================== DRAG & DROP (sidebar → canvas) ====================
+let pendingDragType = null
+
+function onDragStart(event, type) {
+  pendingDragType = type
+  event.dataTransfer.setData('text/plain', type)
+  event.dataTransfer.effectAllowed = 'copy'
+}
+
+function onCanvasDrop(event) {
+  if (!pendingDragType) return
+  const newSection = buildSection(pendingDragType)
+  if (newSection) {
+    sections.value.push(newSection)
+    showToast('Element added ✨')
+    saveState()
+  }
+  pendingDragType = null
+}
+
+function buildSection(type) {
+  const id = Date.now().toString()
+  const decoEmojis = { 'deco-leaf': '🌿', 'deco-flower': '🌸', 'deco-rose': '🌹', 'deco-vine': '🍃' }
+
+  const templates = {
+    heading: { type: 'text-heading', html: `<div style="padding:32px 40px;text-align:center;background:white;"><h2 contenteditable="true" style="font-family:'Cormorant Garamond',serif;font-size:2rem;color:#36402d;">Your Heading Here</h2></div>` },
+    paragraph: { type: 'text-para', html: `<div style="padding:24px 40px;text-align:center;background:white;"><p contenteditable="true" style="color:#62744d;font-size:0.875rem;line-height:1.75;max-width:420px;margin:0 auto;">Click to edit this paragraph text.</p></div>` },
+    'comp-rsvp': { type: 'rsvp', html: `<div style="padding:40px;text-align:center;background:#f6f7f4;"><h2 contenteditable="true" style="font-family:'Cormorant Garamond',serif;font-size:1.75rem;color:#36402d;margin-bottom:1rem;">RSVP</h2><div style="max-width:260px;margin:0 auto;display:flex;flex-direction:column;gap:8px;"><input type="text" placeholder="Your name" style="padding:8px 14px;border-radius:10px;border:1px solid #d5dbca;font-size:0.8rem;"><input type="email" placeholder="Email" style="padding:8px 14px;border-radius:10px;border:1px solid #d5dbca;font-size:0.8rem;"><button type="button" style="padding:8px;border-radius:10px;background:#62744d;color:white;font-size:0.8rem;font-weight:500;border:none;cursor:pointer;">Send RSVP</button></div></div>` },
+    'comp-timeline': { type: 'timeline', html: `<div style="padding:40px;background:white;"><h2 contenteditable="true" style="font-family:'Cormorant Garamond',serif;font-size:1.75rem;color:#36402d;text-align:center;margin-bottom:1.5rem;">Schedule</h2><div style="max-width:320px;margin:0 auto;"><div style="display:flex;align-items:center;gap:12px;padding:8px 0;"><div style="font-size:0.75rem;color:#a89d8a;width:56px;text-align:right;font-weight:500;">3:00</div><div style="width:8px;height:8px;border-radius:50%;background:#95a87d;flex-shrink:0;"></div><div contenteditable="true" style="font-size:0.75rem;color:#36402d;">Ceremony</div></div><div style="display:flex;align-items:center;gap:12px;padding:8px 0;"><div style="font-size:0.75rem;color:#a89d8a;width:56px;text-align:right;font-weight:500;">5:00</div><div style="width:8px;height:8px;border-radius:50%;background:#f2b8ab;flex-shrink:0;"></div><div contenteditable="true" style="font-size:0.75rem;color:#36402d;">Reception</div></div></div></div>` },
+    'comp-map': { type: 'map', html: `<div style="padding:40px;background:#f6f7f4;text-align:center;"><h2 contenteditable="true" style="font-family:'Cormorant Garamond',serif;font-size:1.75rem;color:#36402d;margin-bottom:1rem;">Venue</h2><div style="max-width:320px;margin:0 auto;height:160px;border-radius:12px;background:rgba(213,219,202,0.5);display:flex;align-items:center;justify-content:center;border:1px solid #d5dbca;"><div style="text-align:center;"><div style="color:#95a87d;font-size:1.5rem;margin-bottom:4px;">📍</div><div contenteditable="true" style="font-size:0.75rem;color:#a89d8a;">Rose Garden Estate</div></div></div></div>` },
+    'comp-gallery': { type: 'gallery', html: `<div style="padding:40px;background:white;text-align:center;"><h2 contenteditable="true" style="font-family:'Cormorant Garamond',serif;font-size:1.75rem;color:#36402d;margin-bottom:1rem;">Photo Gallery</h2><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:360px;margin:0 auto;"><div style="height:80px;border-radius:8px;background:#eaede4;display:flex;align-items:center;justify-content:center;color:#95a87d;">🖼</div><div style="height:80px;border-radius:8px;background:#fbe8e4;display:flex;align-items:center;justify-content:center;color:#f2b8ab;">🖼</div><div style="height:80px;border-radius:8px;background:#f4f0e3;display:flex;align-items:center;justify-content:center;color:#bfb6a5;">🖼</div></div></div>` },
+  }
+
+  // Decorations
+  if (decoEmojis[type]) {
+    return { id, type: 'decoration', html: `<div style="padding:16px 40px;text-align:center;background:white;"><div style="display:flex;align-items:center;justify-content:center;gap:16px;"><div style="width:64px;border-top:1px solid #d5dbca;"></div><span style="font-size:1.5rem;">${decoEmojis[type]}</span><div style="width:64px;border-top:1px solid #d5dbca;"></div></div></div>` }
+  }
+
+  const t = templates[type]
+  return t ? { id, ...t } : null
+}
+
+// ==================== SECTION REORDER ====================
+function onSectionDragStart(event, idx) {
+  dragIdx.value = idx
+  event.dataTransfer.effectAllowed = 'move'
+  // Prevent sidebar drag from conflicting
+  pendingDragType = null
+}
+
+function onSectionDragOver(event, idx) {
+  if (dragIdx.value === null || dragIdx.value === idx) return
+  dragOverIdx.value = idx
+}
+
+function onSectionDrop(event, idx) {
+  if (dragIdx.value === null || dragIdx.value === idx) return
+  const moved = sections.value.splice(dragIdx.value, 1)[0]
+  sections.value.splice(idx, 0, moved)
+  showToast('Section reordered')
+  saveState()
+}
+
+function onSectionDragEnd() {
+  dragIdx.value = null
+  dragOverIdx.value = null
+}
+
+// ==================== THEME ====================
+function switchTheme(theme) {
+  currentTheme.value = theme
+  const heroSection = sections.value.find(s => s.type === 'hero')
+  if (!heroSection) return
+  const themes = {
+    garden:  'linear-gradient(135deg,#eaede4 0%,#f4f0e3 50%,#fbe8e4 100%)',
+    blush:   'linear-gradient(135deg,#fbe8e4 0%,#fdf5f3 50%,#f8d5cd 100%)',
+    classic: 'linear-gradient(135deg,#f3f1ec 0%,#faf9f7 50%,#e8e4db 100%)',
+  }
+  // Replace background in hero html
+  heroSection.html = heroSection.html.replace(/background:[^;]+;/, `background:${themes[theme]};`)
+  showToast(`${theme.charAt(0).toUpperCase() + theme.slice(1)} theme applied 🎨`)
+}
+
+// ==================== SIDEBAR TOGGLE ====================
+function toggleSection(name) {
+  collapsed[name] = !collapsed[name]
+}
+
+// ==================== UNDO / REDO ====================
+function saveState() {
+  const snapshot = JSON.stringify(sections.value)
+  undoStack.value.push(snapshot)
+  if (undoStack.value.length > 30) undoStack.value.shift()
+  redoStack.value = []
+}
+
+function undo() {
+  if (undoStack.value.length < 2) return
+  const current = undoStack.value.pop()
+  redoStack.value.push(current)
+  sections.value = JSON.parse(undoStack.value[undoStack.value.length - 1])
+  showToast('Undo ↩')
+}
+
+function redo() {
+  if (!redoStack.value.length) return
+  const state = redoStack.value.pop()
+  undoStack.value.push(state)
+  sections.value = JSON.parse(state)
+  showToast('Redo ↪')
+}
+
+// ==================== SAVE ====================
+function triggerSave() {
+  saveStatus.value = 'saving'
+  saveLabel.value = 'Saving...'
+  setTimeout(() => {
+    saveStatus.value = 'saved'
+    saveLabel.value = 'Saved ✓'
+    showToast('Invitation saved! 💾')
+    setTimeout(() => {
+      saveStatus.value = 'pulse'
+      saveLabel.value = 'Auto-saved'
+    }, 2000)
+  }, 800)
+}
+
+// ==================== TOAST ====================
+function showToast(msg) {
+  const id = Date.now()
+  toasts.value.push({ id, msg })
+  setTimeout(() => {
+    toasts.value = toasts.value.filter(t => t.id !== id)
+  }, 2500)
+}
+
+// ==================== PREVIEW MODE ====================
+function setPreviewMode(mode) { previewMode.value = mode }
+
+// Init undo state
+onMounted(() => saveState())
+</script>
+
+<style lang="scss">
+/* Editor uses DM Sans + Cormorant — imported separately */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+
+// ==================== ROOT ====================
+.editor-root {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #fdfcf9;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  overflow: hidden;
+}
+
+// ==================== TOP NAV ====================
+.editor-nav {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  flex-shrink: 0;
+  background: rgba(253,252,249,0.9);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(213,219,202,0.4);
+  z-index: 50;
+
+  &__left, &__right { display: flex; align-items: center; gap: 8px; }
+
+  &__logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+  }
+
+  &__brand {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #36402d;
+    letter-spacing: 0.04em;
+  }
+
+  &__divider { width: 1px; height: 24px; background: #d5dbca; margin: 0 4px; }
+
+  &__btn-group { display: flex; gap: 2px; }
+
+  &__icon-btn {
+    padding: 6px;
+    border-radius: 8px;
+    border: none;
+    background: none;
+    color: #62744d;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: background .15s;
+    &:hover { background: #eaede4; }
+  }
+
+  &__preview-toggle {
+    display: flex;
+    background: rgba(234,237,228,0.6);
+    border-radius: 8px;
+    padding: 2px;
+  }
+
+  &__save-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    color: #95a87d;
+    margin-right: 8px;
+  }
+
+  &__action-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 1px solid #d5dbca;
+    background: none;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #4c5a3d;
+    cursor: pointer;
+    transition: background .15s;
+    &:hover { background: #eaede4; }
+  }
+
+  &__publish-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 16px;
+    border-radius: 8px;
+    border: none;
+    background: #62744d;
+    color: white;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background .15s;
+    &:hover { background: #4c5a3d; }
+  }
+}
+
+.preview-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: none;
+  background: none;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #62744d;
+  cursor: pointer;
+  transition: all .15s;
+
+  &--active { background: #62744d; color: white; }
+}
+
+.save-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: #95a87d;
+  &.pulse { animation: pulse 2s infinite; }
+  &.saving { background: #e99482; animation: pulse .6s infinite; }
+  &.saved { background: #7a8f62; }
+}
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.4; } }
+
+// ==================== BODY ====================
+.editor-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+// ==================== SIDEBARS ====================
+.editor-sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: rgba(253,252,249,0.9);
+  backdrop-filter: blur(20px);
+  overflow-y: auto;
+
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-thumb { background: #d5dbca; border-radius: 4px; }
+
+  &--left { border-right: 1px solid rgba(213,219,202,0.4); }
+
+  &--right {
+    border-left: 1px solid rgba(213,219,202,0.4);
+    opacity: 0;
+    transform: translateX(10px);
+    pointer-events: none;
+    transition: opacity .3s, transform .3s;
+
+    &.editor-sidebar--visible {
+      opacity: 1;
+      transform: translateX(0);
+      pointer-events: auto;
+    }
+  }
+}
+
+// Sidebar sections
+.sidebar-section {
+  padding: 12px;
+  border-bottom: 1px solid rgba(213,219,202,0.3);
+
+  &__toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: none;
+    border: none;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #4c5a3d;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    padding: 0;
+
+    span { display: flex; align-items: center; gap: 6px; }
+  }
+
+  &__body {
+    max-height: 400px;
+    overflow: hidden;
+    transition: max-height .35s ease, opacity .25s ease;
+    opacity: 1;
+    margin-top: 10px;
+
+    &.collapsed { max-height: 0; opacity: 0; margin-top: 0; }
+  }
+}
+
+.rotated { transform: rotate(-90deg); }
+
+// Preset cards
+.preset-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.preset-card {
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color .2s;
+
+  &--active { border-color: #7a8f62; }
+
+  &__swatch { height: 40px; }
+  &__label { font-size: 9px; text-align: center; padding: 2px 0; font-weight: 500; color: #4c5a3d; background: #fdfcf9; }
+}
+
+// Component cards
+.comp-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  background: rgba(250,248,241,0.8);
+  border: 1px solid rgba(213,219,202,0.4);
+  cursor: grab;
+  transition: transform .2s, box-shadow .2s;
+  margin-bottom: 6px;
+
+  &:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.08); }
+  &:active { cursor: grabbing; }
+
+  &__icon {
+    width: 30px; height: 30px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.9rem; font-weight: 700; color: #62744d;
+
+    &--sage { background: #eaede4; color: #62744d; }
+    &--blush { background: #fbe8e4; color: #e99482; }
+  }
+
+  &__title { font-size: 0.75rem; font-weight: 500; color: #36402d; }
+  &__sub   { font-size: 0.65rem; color: #a89d8a; }
+}
+
+// Deco grid
+.deco-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.deco-card {
+  border-radius: 8px;
+  height: 52px;
+  background: rgba(250,248,241,0.8);
+  border: 1px solid rgba(213,219,202,0.4);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem;
+  cursor: grab;
+  transition: transform .2s;
+  &:hover { transform: translateY(-2px); }
+}
+
+// ==================== CANVAS ====================
+.editor-canvas {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 32px;
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(181,194,163,0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(242,184,171,0.06) 0%, transparent 50%),
+    #f6f7f4;
+}
+
+.canvas-frame {
+  background: white;
+  position: relative;
+
+  &--desktop {
+    width: 100%;
+    max-width: 780px;
+    border-radius: 12px;
+    border: 2px solid rgba(213,219,202,0.5);
+    box-shadow: 0 25px 60px rgba(0,0,0,0.1);
+    overflow: hidden;
+  }
+
+  &--mobile {
+    width: 375px;
+    border-radius: 32px;
+    border: 8px solid #36402d;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.15);
+    overflow: hidden;
+    position: relative;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 120px; height: 24px;
+      background: #36402d;
+      border-radius: 0 0 16px 16px;
+      z-index: 10;
+    }
+  }
+}
+
+.canvas-section {
+  position: relative;
+
+  &.dragging { opacity: 0.5; transform: scale(0.98); }
+  &.drag-over { border-top: 3px solid #7a8f62; }
+}
+
+.drag-handle {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  background: rgba(255,255,255,0.85);
+  border-radius: 6px;
+  padding: 4px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  cursor: grab;
+  opacity: 0;
+  transition: opacity .2s;
+
+  &__icon { color: #95a87d; display: block; }
+
+  .canvas-section:hover & { opacity: 1; }
+}
+
+.canvas-element {
+  transition: box-shadow .2s;
+  cursor: pointer;
+
+  &:hover { box-shadow: 0 0 0 2px rgba(122,143,98,0.3); }
+  &.selected { box-shadow: 0 0 0 2px #7a8f62; }
+
+  [contenteditable]:focus {
+    outline: 2px dashed #7a8f62;
+    outline-offset: 4px;
+    border-radius: 2px;
+  }
+}
+
+// ==================== PROPERTIES PANEL ====================
+.props-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid rgba(213,219,202,0.3);
+
+  &__icon {
+    width: 22px; height: 22px;
+    background: #eaede4;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    color: #62744d;
+  }
+
+  &__label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #4c5a3d;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+}
+
+.props-group {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(213,219,202,0.2);
+
+  &__title {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: #a89d8a;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+}
+
+.props-label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 0.65rem;
+  color: #a89d8a;
+  margin-bottom: 8px;
+}
+
+.props-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+.props-select, .props-input {
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid #d5dbca;
+  background: #fdfcf9;
+  font-size: 0.75rem;
+  color: #36402d;
+  outline: none;
+  font-family: inherit;
+
+  &:focus { border-color: #95a87d; box-shadow: 0 0 0 2px rgba(149,168,125,0.2); }
+}
+
+.props-range { width: 100%; accent-color: #7a8f62; }
+
+.color-row { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
+.color-picker { width: 30px; height: 30px; border-radius: 8px; border: 1px solid #d5dbca; cursor: pointer; padding: 0; }
+.color-swatches { display: flex; gap: 4px; }
+.color-swatch {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  cursor: pointer;
+  transition: transform .15s;
+  &:hover { transform: scale(1.15); }
+}
+
+.align-btns { display: flex; gap: 4px; margin-top: 4px; }
+.align-btn {
+  flex: 1;
+  padding: 6px;
+  border-radius: 8px;
+  border: 1px solid #d5dbca;
+  background: white;
+  color: #62744d;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s;
+  &:hover, &--active { background: #eaede4; }
+}
+
+.props-actions { padding: 12px 16px; display: flex; flex-direction: column; gap: 6px; }
+.props-btn {
+  width: 100%;
+  padding: 8px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  transition: background .15s;
+
+  &--secondary {
+    border: 1px solid #d5dbca;
+    color: #62744d;
+    background: white;
+    &:hover { background: #eaede4; }
+  }
+
+  &--danger {
+    border: 1px solid #f2b8ab;
+    color: #dc7060;
+    background: white;
+    &:hover { background: #fdf5f3; }
+  }
+}
+
+// ==================== QUICK TOOLBAR ====================
+.quick-toolbar {
+  position: fixed;
+  z-index: 50;
+  background: rgba(253,252,249,0.9);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(213,219,202,0.4);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  animation: toolbarIn .25s cubic-bezier(.16,1,.3,1);
+}
+
+@keyframes toolbarIn {
+  from { transform: translateY(8px) scale(0.95); opacity: 0; }
+  to   { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.qt-btn {
+  padding: 6px;
+  border-radius: 7px;
+  border: none;
+  background: none;
+  color: #62744d;
+  cursor: pointer;
+  display: flex; align-items: center;
+  transition: background .15s;
+  &:hover { background: #eaede4; }
+  &--danger { color: #dc7060; &:hover { background: #fdf5f3; } }
+}
+
+.qt-divider { width: 1px; height: 18px; background: #d5dbca; margin: 0 2px; }
+
+// ==================== TOAST ====================
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  pointer-events: none;
+}
+
+.toast {
+  background: rgba(253,252,249,0.9);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(213,219,202,0.4);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  padding: 10px 18px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #4c5a3d;
+}
+
+.toast-enter-active, .toast-leave-active { transition: all .35s cubic-bezier(.16,1,.3,1); }
+.toast-enter-from { transform: translateY(16px); opacity: 0; }
+.toast-leave-to   { transform: translateY(-8px); opacity: 0; }
+
+// ==================== MODAL ====================
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(54,64,45,0.5);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.2);
+  max-width: 640px;
+  width: calc(100% - 32px);
+  max-height: 90vh;
+  overflow: auto;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid #eaede4;
+  }
+
+  &__title { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; color: #36402d; }
+
+  &__close {
+    padding: 6px;
+    border-radius: 8px;
+    border: none;
+    background: none;
+    color: #95a87d;
+    cursor: pointer;
+    display: flex;
+    &:hover { background: #eaede4; }
+  }
+
+  &__body { padding: 24px; }
+}
+
+.modal-enter-active, .modal-leave-active { transition: all .3s ease; }
+.modal-enter-from, .modal-leave-to { opacity: 0; .modal { transform: scale(0.95); } }
+</style>
