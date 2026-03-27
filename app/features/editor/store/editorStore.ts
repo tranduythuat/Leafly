@@ -46,14 +46,17 @@ export const useEditorStore = defineStore("editor", {
     },
 
     executeCommand(command: Command) {
+      console.log('🔥 Store executeCommand')
       history.execute(command)
     },
 
     undo() {
+      console.log('🔥 Store undo')
       history.undo()
     },
 
     redo() {
+      console.log('🔥 Store redo')
       history.redo()
     }
   },
