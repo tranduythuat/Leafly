@@ -9,7 +9,7 @@ export function createResizeCommand(
     oldHeight: number
     newWidth: number
     newHeight: number
-  }) {
+  }): Command {
   const el = store.elements.find((e) => e.id === payload.id);
 
   if (!el) {

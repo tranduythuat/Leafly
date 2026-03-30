@@ -1,10 +1,9 @@
 <template>
   <div
     :style="style"
-    @click.stop="select"
-    @mousedown="startDrag"
+    @mousedown.stop="onMouseDown"
   >
-    {{ element.content }}
+    {{ element.content }} ; {{element.id}} {{isSelected}}
 
     <!-- Resize handle -->
     <div
@@ -20,6 +19,7 @@ import { computed } from "vue";
 import { useEditorStore } from "../../store/editorStore";
 import { createResizeCommand } from '../../core/commands/resizeElement'
 import { createMoveCommand } from '../../core/commands/moveElement'
+import { createGroupMoveCommand } from '../../core/commands/moveGroupElement'
 
 const props = defineProps<{
   element: {
@@ -39,7 +39,7 @@ const store = useEditorStore()
 // =====================
 
 const isSelected = computed(() =>
-  store.selectedId === props.element.id
+  store.selectedIds.includes(props.element.id)
 )
 
 const style = computed(() => ({
@@ -53,9 +53,28 @@ const style = computed(() => ({
   userSelect: "none"
 }))
 
-const select = () => {
-  store.select(props.element.id)
+const onMouseDown = (e: MouseEvent) => {
+  if (e.button !== 0) return
+
+  const isMulti = e.shiftKey
+  const isAlreadySelected = store.selectedIds.includes(props.element.id)
+  const hasGroupSelection = store.selectedIds.length > 1
+
+  // Keep current multi-selection when dragging one selected item.
+  if (isMulti) {
+    store.select(props.element.id, true)
+  } else if (!isAlreadySelected || !hasGroupSelection) {
+    store.select(props.element.id, false)
+  }
+
+  startDrag(e)
 }
+
+// const select = (e: MouseEvent) => {
+//   if (isDragging) return
+//   const isMulti = e.shiftKey
+//   store.select(props.element.id, isMulti)
+// }
 
 // =====================
 // DRAG
@@ -70,17 +89,36 @@ let startY = 0
 let lastX = 0
 let lastY = 0
 
+let isDragging = false
+let initialPositions: Record<string, { x: number; y: number }> = {}
+
 const startDrag = (e: MouseEvent) => {
   e.preventDefault()
 
-  startX = e.clientX - props.element.x
-  startY = e.clientY - props.element.y
+  const selected = store.selectedIds
+  isDragging = false
 
-  initialX = props.element.x
-  initialY = props.element.y
+  // lưu toàn bộ vị trí ban đầu
+  initialPositions = {}
 
-  lastX = props.element.x
-  lastY = props.element.y
+  selected.forEach(id => {
+    const el = store.elements.find(e => e.id === id)
+    if (el) {
+      initialPositions[id] = { x: el.x, y: el.y }
+    }
+  })
+
+  startX = e.clientX
+  startY = e.clientY
+
+  // startX = e.clientX - props.element.x
+  // startY = e.clientY - props.element.y
+
+  // initialX = props.element.x
+  // initialY = props.element.y
+
+  // lastX = props.element.x
+  // lastY = props.element.y
 
   document.body.style.userSelect = "none"
 
@@ -89,14 +127,28 @@ const startDrag = (e: MouseEvent) => {
 }
 
 const onDrag = (e: MouseEvent) => {
-  const newX = e.clientX - startX
-  const newY = e.clientY - startY
+  setTimeout(() => {
+    isDragging = false
+  }, 0)
+  
+  const dx = e.clientX - startX
+  const dy = e.clientY - startY
 
-  lastX = newX
-  lastY = newY
+  store.selectedIds.forEach(id => {
+    const init = initialPositions[id]
+    if (!init) return
 
-  // realtime update
-  store.move(props.element.id, newX, newY)
+    store.move(id, init.x + dx, init.y + dy)
+  })
+
+  // const newX = e.clientX - startX
+  // const newY = e.clientY - startY
+
+  // lastX = newX
+  // lastY = newY
+
+  // // realtime update
+  // store.move(props.element.id, newX, newY)
 }
 
 const stopDrag = () => {
@@ -107,25 +159,45 @@ const stopDrag = () => {
     currentY: props.element.y
   })
 
-  document.body.style.userSelect = ""
-  // chỉ tạo command nếu có thay đổi
-  if (
-    lastX !== initialX ||
-    lastY !== initialY
-  ) {
-    const command = createMoveCommand(store, {
-      id: props.element.id,
-      oldX: initialX,
-      oldY: initialY,
-      newX: lastX,
-      newY: lastY
-    })
+  const items = store.selectedIds
+    .map(id => {
+    const el = store.elements.find(e => e.id === id)
+    const init = initialPositions[id]
+    if (!el || !init) return null
 
-    console.log('command', command)
+    return {
+      id,
+      oldX: init.x,
+      oldY: init.y,
+      newX: el.x,
+      newY: el.y
+    }
+  })
+  .filter((item): item is { id: string; oldX: number; oldY: number; newX: number; newY: number } => item !== null)
 
-    store.executeCommand(command)
+  if (!items.length) {
+    document.body.style.userSelect = ""
+    window.removeEventListener("mousemove", onDrag)
+    window.removeEventListener("mouseup", stopDrag)
+    return
   }
 
+  const hasPositionChange = items.some(
+    item => item.oldX !== item.newX || item.oldY !== item.newY
+  )
+
+  if (!hasPositionChange) {
+    document.body.style.userSelect = ""
+    window.removeEventListener("mousemove", onDrag)
+    window.removeEventListener("mouseup", stopDrag)
+    return
+  }
+
+  const command = createGroupMoveCommand(store, { items })
+
+  store.executeCommand(command)
+  
+  document.body.style.userSelect = ""
   window.removeEventListener("mousemove", onDrag)
   window.removeEventListener("mouseup", stopDrag)
 }
