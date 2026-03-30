@@ -25,6 +25,15 @@ export const useEditorStore = defineStore("editor", {
         height: 40,
         content: "Hello Thuat",
       },
+      {
+        id: "3",
+        type: "text",
+        x: 100,
+        y: 400,
+        width: 150,
+        height: 40,
+        content: "Hello Uyen",
+      },
     ],
     selectedIds: [] as string[]
   }),
