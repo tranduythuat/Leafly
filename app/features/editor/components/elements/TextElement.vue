@@ -50,7 +50,8 @@ const style = computed(() => ({
   height: props.element.height + "px",
   border: isSelected.value ? "1px solid blue" : "none",
   cursor: isSelected.value ? "move" : "default",
-  userSelect: "none"
+  userSelect: "none",
+  zIndex: 2
 }))
 
 const onMouseDown = (e: MouseEvent) => {
@@ -288,5 +289,6 @@ const stopResize = () => {
   right: -6px;
   bottom: -6px;
   cursor: se-resize;
+  z-index: 3;
 }
 </style>
