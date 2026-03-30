@@ -8,7 +8,7 @@ export function createHistory() {
     execute(command: Command) {
       console.log('🟢 EXECUTE COMMAND', command)
 
-      command.execute();
+      // command.execute();
 
       undoStack.push(command);
       redoStack.length = 0;

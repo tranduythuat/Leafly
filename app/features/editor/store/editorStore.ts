@@ -16,13 +16,34 @@ export const useEditorStore = defineStore("editor", {
         height: 40,
         content: "Hello Leafly",
       },
+      {
+        id: "2",
+        type: "text",
+        x: 400,
+        y: 100,
+        width: 150,
+        height: 40,
+        content: "Hello Thuat",
+      },
     ],
-    selectedId: null as string | null,
+    selectedIds: [] as string[]
   }),
 
   actions: {
-    select(id: string) {
-      this.selectedId = id;
+    select(id: string, isMulti = false) {
+      console.log('isMulti', isMulti);
+      
+      if (isMulti) {
+        if (this.selectedIds.includes(id)) {
+          this.selectedIds = this.selectedIds.filter(i => i !== id)
+        } else {
+          this.selectedIds.push(id)
+        }
+      } else {
+        this.selectedIds = [id]
+      }
+      console.log('selectedIds', this.selectedIds);
+      
     },
 
     move(id: string, x: number, y: number) {
@@ -58,7 +79,7 @@ export const useEditorStore = defineStore("editor", {
     redo() {
       console.log('🔥 Store redo')
       history.redo()
-    }
+    },
   },
 });
 
