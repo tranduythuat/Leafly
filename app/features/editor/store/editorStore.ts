@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { createHistory } from '../core/history'
-import type { Command } from '../types/command'
+import type { Command, EditorElement } from '../types'
 
 let history = createHistory() 
 
@@ -15,6 +15,8 @@ export const useEditorStore = defineStore("editor", {
         width: 150,
         height: 40,
         content: "Hello Leafly",
+        color: '#000000',
+        alignment: 'left',
       },
       {
         id: "2",
@@ -24,6 +26,8 @@ export const useEditorStore = defineStore("editor", {
         width: 150,
         height: 40,
         content: "Hello Thuat",
+        color: 'red',
+        alignment: 'left',
       },
       {
         id: "3",
@@ -33,8 +37,10 @@ export const useEditorStore = defineStore("editor", {
         width: 150,
         height: 40,
         content: "Hello Uyen",
+        color: '#000000',
+        alignment: 'left',
       },
-    ],
+    ] as EditorElement[],
     selectedIds: [] as string[]
   }),
 

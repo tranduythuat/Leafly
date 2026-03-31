@@ -1,5 +1,5 @@
 import type { EditorStore } from '../../store/editorStore'
-import type { Command } from '../../types/command'
+import type { Command } from '../../types'
 
 export function createResizeCommand(
   store: EditorStore, 
