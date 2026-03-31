@@ -1,5 +1,5 @@
 import type { EditorStore } from "../../store/editorStore";
-import type { GroupMovePayload } from "../../types/command";
+import type { GroupMovePayload } from "../../types";
 
 export function createGroupMoveCommand(
   store: EditorStore,

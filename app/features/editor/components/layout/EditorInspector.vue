@@ -1,6 +1,16 @@
 <template>
-  <div class="inspector" v-if="selected">
-    <input v-model="text" />
+  <div class="inspector">
+    <template v-if="selected">
+      <!-- 👇 render theo type -->
+      <TextInspector
+        v-if="selected.type === 'text'"
+        :element="selected"
+      />
+    </template>
+
+    <div v-else class="empty">
+      No element selected
+    </div>
   </div>
 </template>
 
@@ -8,17 +18,16 @@
 import { computed } from 'vue'
 import { useEditorStore } from '../../store/editorStore'
 
+// 👇 import inspector theo type
+import TextInspector from '../../inspector/TextInspector.vue'
+
 const store = useEditorStore()
 
-const selected = computed(() =>
-  store.elements.find(e => e.id === store.selectedId)
-)
+const selected = computed(() => {
+  if (store.selectedIds.length !== 1) return null
 
-const text = computed({
-  get: () => selected.value?.content,
-  set: (val) => {
-    if (!selected.value) return
-    store.updateText(selected.value.id, val)
-  }
+  return store.elements.find(
+    e => e.id === store.selectedIds[0]
+  )
 })
 </script>

@@ -29,6 +29,9 @@ const props = defineProps<{
     width: number
     height: number
     content: string
+    color: string
+    fontSize: number
+    alignment?: "left" | "center" | "right" | "justify"
   }
 }>()
 
@@ -51,6 +54,9 @@ const style = computed(() => ({
   border: isSelected.value ? "1px solid blue" : "none",
   cursor: isSelected.value ? "move" : "default",
   userSelect: "none",
+  color: props.element.color,
+  fontSize: (props.element.fontSize || 16) + "px",
+  textAlign: props.element.alignment || "left",
   zIndex: 2
 }))
 
