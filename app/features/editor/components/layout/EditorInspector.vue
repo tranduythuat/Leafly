@@ -6,6 +6,12 @@
         v-if="selected.type === 'text'"
         :element="selected"
       />
+
+      <ImageInspector
+        v-if="selected.type === 'image'"
+        :element="selected"
+      />
+
     </template>
 
     <div v-else class="empty">
@@ -20,14 +26,15 @@ import { useEditorStore } from '../../store/editorStore'
 
 // 👇 import inspector theo type
 import TextInspector from '../../inspector/TextInspector.vue'
+import ImageInspector from '../../inspector/ImageInspector.vue' 
 
 const store = useEditorStore()
 
 const selected = computed(() => {
   if (store.selectedIds.length !== 1) return null
 
-  return store.elements.find(
+ return store.elements.find(
     e => e.id === store.selectedIds[0]
-  )
+  ) || null
 })
 </script>
