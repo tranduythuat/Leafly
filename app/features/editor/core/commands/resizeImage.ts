@@ -1,4 +1,5 @@
 import type { EditorStore } from "../../store/editorStore";
+
 export function createResizeCommand(
   store: EditorStore,
   payload: {

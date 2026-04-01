@@ -1,6 +1,6 @@
 <template>
-  <div class="canvas">
-    <ElementRenderer v-for="el in elements" :key="el.id" :element="el" />
+  <div class="canvas-body">
+    <ElementRenderer :elements="elements" />
     <BoundingBox/>
   </div>
 </template>
@@ -15,7 +15,7 @@ const elements = store.elements;
 </script>
 
 <style scoped>
-.canvas {
+.canvas-body {
   flex: 1;
   position: relative;
   background: #f5f5f5;

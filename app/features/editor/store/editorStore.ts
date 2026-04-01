@@ -41,7 +41,11 @@ export const useEditorStore = defineStore("editor", {
         alignment: 'left',
       },
     ] as EditorElement[],
-    selectedIds: [] as string[]
+    selectedIds: [] as string[],
+    background: {
+      type: 'color',
+      value: '#ffffff'
+    }
   }),
 
   actions: {
@@ -97,6 +101,7 @@ export const useEditorStore = defineStore("editor", {
     },
 
     addImage(src: string) {
+      const maxZ = Math.max(0, ...this.elements.map(e => e.zIndex || 0))
       this.elements.push({
         id: Date.now().toString(),
         type: "image",
@@ -104,8 +109,15 @@ export const useEditorStore = defineStore("editor", {
         y: 100,
         width: 200,
         height: 150,
+        zIndex: maxZ + 1,
         src
       })
+    },
+    setBackground(type: 'color' | 'image', value: string) {
+      this.background = { type, value }
+
+      console.log('background', this.background);
+      
     }
   },
 });
