@@ -1,22 +1,20 @@
 <template>
   <div class="sidebar">
-    <div>Sidebar</div>
-    <!-- <button @click="addText">Add Text</button> -->
+    <input type="file" @change="onUpload" />
   </div>
 </template>
 
-<script setup>
-// import { useEditorStore } from "../../store/editorStore";
+<script setup lang="ts">
+import { useEditorStore } from "../../store/editorStore";
 
-// const store = useEditorStore();
+const store = useEditorStore();
 
-// const addText = () => {
-//   store.elements.push({
-//     id: Date.now().toString(),
-//     type: "text",
-//     x: 50,
-//     y: 50,
-//     content: "New Text",
-//   });
-// };
+const onUpload = (e: Event) => {
+  const file = (e.target as HTMLInputElement).files?.[0];
+  if (!file) return;
+
+  const url = URL.createObjectURL(file);
+
+  store.addImage(url);
+};
 </script>

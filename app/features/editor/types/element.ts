@@ -1,12 +1,5 @@
-import type { Alignment, ID, Position, Size } from "./base"
+import type { CanvasElement } from "./base"
 
-export interface EditorElement extends Position, Size {
-  id: ID
-  type: "text"
-  content: string
-  fontSize?: number
-  color?: string
-  alignment?: Alignment
-}
+export type EditorElement = CanvasElement
 
-export type EditorElementPatch = Partial<EditorElement>
+export type EditorElementPatch = Partial<CanvasElement>

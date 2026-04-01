@@ -70,7 +70,7 @@ export const useEditorStore = defineStore("editor", {
 
     updateText(id: string, content: string) {
       const el = this.elements.find((e) => e.id === id);
-      if (!el) return;
+      if (!el || el.type !== "text") return;
       el.content = content;
     },
 
@@ -95,6 +95,18 @@ export const useEditorStore = defineStore("editor", {
       console.log('🔥 Store redo')
       history.redo()
     },
+
+    addImage(src: string) {
+      this.elements.push({
+        id: Date.now().toString(),
+        type: "image",
+        x: 100,
+        y: 100,
+        width: 200,
+        height: 150,
+        src
+      })
+    }
   },
 });
 

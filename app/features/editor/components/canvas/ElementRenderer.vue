@@ -1,17 +1,24 @@
 <template>
-  <component :is="componentType" :element="element" />
+  <div class="canvas">
+    <component
+      v-for="el in store.elements"
+      :key="el.id"
+      :is="resolveComponent(el)"
+      :element="el"
+    />
+  </div>
 </template>
 
-<script setup>
-import { computed } from "vue";
-import TextElement from "../elements/TextElement.vue";
+<script setup lang="ts">
+import { useEditorStore } from '../../store/editorStore'
 
-const props = defineProps(["element"]);
+import TextElement from '../elements/TextElement.vue'
+import ImageElement from '../elements/ImageElement.vue'
 
-const componentType = computed(() => {
-  switch (props.element.type) {
-    case "text":
-      return TextElement;
-  }
-});
+const store = useEditorStore()
+
+const resolveComponent = (el) => {
+  if (el.type === 'text') return TextElement
+  if (el.type === 'image') return ImageElement
+}
 </script>
