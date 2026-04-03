@@ -14,6 +14,7 @@ export interface Size {
 
 export interface BaseElement extends Position, Size {
   id: ID
+  zIndex: number
 }
 
 export interface TextElement extends BaseElement {

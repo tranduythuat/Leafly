@@ -11,6 +11,11 @@
       <label>Height</label>
       <input type="number" v-model.number="local.height" />
     </div>
+
+    <div class="field">
+      <button @click="bringToFront">Bring to front</button>
+      <button @click="sendToBack">Send to back</button>
+    </div>
   </div>
 </template>
 
@@ -19,6 +24,24 @@ import { reactive, watch } from "vue";
 import { useEditorStore } from "../store/editorStore";
 import { createResizeCommand } from "../core/commands/resizeImage";
 import { debounce } from "../utils/debounce";
+import {
+  createBringToFrontCommand,
+  createSendToBackCommand
+} from '../core/commands/layer'
+
+const bringToFront = () => {
+  if (!props.element) return
+
+  const cmd = createBringToFrontCommand(store, props.element.id)
+  store.executeCommand(cmd)
+}
+
+const sendToBack = () => {
+  if (!props.element) return
+
+  const cmd = createSendToBackCommand(store, props.element.id)
+  store.executeCommand(cmd)
+}
 
 const props = defineProps<{
   element?: any;
