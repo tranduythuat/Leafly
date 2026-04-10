@@ -3,9 +3,9 @@ import type { EditorStore } from "../../store/editorStore";
 export function createBringToFrontCommand(store: EditorStore, id: string) {
   return {
     execute() {
-      const maxZ = Math.max(...store.elements.map((e) => e.zIndex));
+      const maxZ = Math.max(0, ...store.allElements.map((e) => e.zIndex));
 
-      const el = store.elements.find((e) => e.id === id);
+      const el = store.findElementById(id)
       if (!el) return;
 
       el.zIndex = maxZ + 1;
@@ -20,9 +20,9 @@ export function createBringToFrontCommand(store: EditorStore, id: string) {
 export function createSendToBackCommand(store: EditorStore, id: string) {
   return {
     execute() {
-      const minZ = Math.min(...store.elements.map((e) => e.zIndex));
+      const minZ = Math.min(0, ...store.allElements.map((e) => e.zIndex));
 
-      const el = store.elements.find((e) => e.id === id);
+      const el = store.findElementById(id)
       if (!el) return;
 
       el.zIndex = minZ - 1;

@@ -7,14 +7,14 @@ export function createUpdateStyleCommand(
 ) {
   return {
     execute() {
-      const el = store.elements.find((e) => e.id === payload.id);
+      const el = store.findElementById(payload.id)
       if (!el) return;
 
       Object.assign(el, payload.newData);
     },
 
     undo() {
-      const el = store.elements.find((e) => e.id === payload.id);
+      const el = store.findElementById(payload.id)
       if (!el) return;
 
       Object.assign(el, payload.oldData);

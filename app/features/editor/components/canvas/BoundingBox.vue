@@ -15,9 +15,7 @@ import { createGroupMoveCommand } from '../../core/commands/moveGroupElement'
 const store = useEditorStore();
 
 const box = computed(() => {
-  const selected = store.elements.filter((e) =>
-    store.selectedIds.includes(e.id)
-  );
+  const selected = store.selectedElements
 
   // Only show draggable group box when multiple items are selected.
   if (selected.length < 2) return null;
@@ -68,7 +66,7 @@ const startDrag = (e: MouseEvent) => {
   initialPositions = {}
 
   store.selectedIds.forEach(id => {
-    const el = store.elements.find(e => e.id === id)
+    const el = store.findElementById(id)
     if (el) {
       initialPositions[id] = { x: el.x, y: el.y }
     }
@@ -93,7 +91,7 @@ const onDrag = (e: MouseEvent) => {
 const stopDrag = () => {
   const items = store.selectedIds
     .map(id => {
-    const el = store.elements.find(e => e.id === id)
+    const el = store.findElementById(id)
     const init = initialPositions[id]
     if (!el || !init) return null
 

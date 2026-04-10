@@ -1,5 +1,5 @@
 <template>
-  <div class="canvas" :style="canvasStyle">
+  <div class="section-canvas" :style="sectionStyle">
     <component
       v-for="el in sortedElements"
       :key="el.id"
@@ -10,45 +10,49 @@
 </template>
 
 <script setup lang="ts">
-
 import { computed } from "vue";
-import { useEditorStore } from '../../store/editorStore'
+import type { EditorElement, Section } from "../../types"
 
 import TextElement from '../elements/TextElement.vue'
 import ImageElement from '../elements/ImageElement.vue'
 
-const store = useEditorStore()
+const props = defineProps<{
+  section: Section
+}>()
 
-const sortedElements = computed(() => {
-  return [...store.elements].sort((a, b) => a.zIndex - b.zIndex)
-})
+const sortedElements = computed(() =>
+  [...props.section.elements].sort((a, b) => a.zIndex - b.zIndex)
+)
 
-const canvasStyle = computed(() => {
-  if (!store.background) return {}
+const sectionStyle = computed(() => ({
+  position: "relative",
+  minHeight: `${props.section.style.minHeight}px`,
+  padding: `${props.section.style.padding}px`,
+  backgroundColor:
+    props.section.style.background.type === "color"
+      ? props.section.style.background.value
+      : undefined,
+  backgroundImage:
+    props.section.style.background.type === "image"
+      ? `url(${props.section.style.background.value})`
+      : undefined,
+  backgroundSize: "cover",
+  backgroundPosition: "center",
+}))
 
-  if (store.background.type === 'color') {
-    return {
-      backgroundColor: store.background.value
-    }
-  }
-
-  return {
-    backgroundImage: `url(${store.background.value})`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center'
-  }
-})
-
-const resolveComponent = (el) => {
+const resolveComponent = (el: EditorElement) => {
   if (el.type === 'text') return TextElement
   if (el.type === 'image') return ImageElement
+
+  return TextElement
 }
 </script>
 
 <style scoped>
-.canvas {
-  position: relative;
-  width: 100%;
-  height: 100%;
+.section-canvas {
+  width: min(100%, 720px);
+  margin: 0 auto;
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(54, 64, 45, 0.08);
 }
 </style>

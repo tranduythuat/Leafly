@@ -12,7 +12,7 @@ export function createResizeCommand(
 ) {
   return {
     execute() {
-      const el = store.elements.find((e) => e.id === payload.id);
+      const el = store.findElementById(payload.id)
       if (!el) return;
 
       el.width = payload.newWidth;
@@ -20,7 +20,7 @@ export function createResizeCommand(
     },
 
     undo() {
-      const el = store.elements.find((e) => e.id === payload.id);
+      const el = store.findElementById(payload.id)
       if (!el) return;
 
       el.width = payload.oldWidth;

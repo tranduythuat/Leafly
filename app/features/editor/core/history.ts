@@ -28,10 +28,6 @@ export function createHistory() {
       cmd.undo();
       redoStack.push(cmd);
 
-      console.log('redoStack[0]', redoStack[0])
-
-
-
       console.log('📦 undoStack size:', undoStack.length)
       console.log('📦 redoStack size:', redoStack.length)
     },

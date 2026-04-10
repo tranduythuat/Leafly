@@ -1,14 +1,16 @@
 <template>
   <div
     :style="style"
+    @click.stop
     @mousedown.stop="onMouseDown"
   >
-    {{ element.content }} ; {{element.id}} {{isSelected}}
+    {{ element.content }}
 
     <!-- Resize handle -->
     <div
       v-if="isSelected"
       class="resize-handle"
+      @click.stop
       @mousedown.stop="startResize"
     />
   </div>
@@ -109,7 +111,7 @@ const startDrag = (e: MouseEvent) => {
   initialPositions = {}
 
   selected.forEach(id => {
-    const el = store.elements.find(e => e.id === id)
+    const el = store.findElementById(id)
     if (el) {
       initialPositions[id] = { x: el.x, y: el.y }
     }
@@ -168,7 +170,7 @@ const stopDrag = () => {
 
   const items = store.selectedIds
     .map(id => {
-    const el = store.elements.find(e => e.id === id)
+    const el = store.findElementById(id)
     const init = initialPositions[id]
     if (!el || !init) return null
 

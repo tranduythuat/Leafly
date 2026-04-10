@@ -10,7 +10,7 @@ export function createResizeCommand(
     newWidth: number
     newHeight: number
   }): Command {
-  const el = store.elements.find((e) => e.id === payload.id);
+  const el = store.findElementById(payload.id)
 
   if (!el) {
     throw new Error('Element not found')

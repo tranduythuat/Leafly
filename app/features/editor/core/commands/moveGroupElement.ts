@@ -8,7 +8,7 @@ export function createGroupMoveCommand(
   return {
     execute() {
       payload.items.forEach((item) => {
-        const el = store.elements.find((e) => e.id === item.id);
+        const el = store.findElementById(item.id);
         if (!el) return;
 
         el.x = item.newX;
@@ -18,7 +18,7 @@ export function createGroupMoveCommand(
 
     undo() {
       payload.items.forEach((item) => {
-        const el = store.elements.find((e) => e.id === item.id);
+        const el = store.findElementById(item.id);
         if (!el) return;
 
         el.x = item.oldX;
