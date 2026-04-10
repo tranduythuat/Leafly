@@ -64,16 +64,28 @@ const local = reactive({
 
 // sync khi đổi selection
 watch(
-  () => props.element,
-  (el) => {
-    if (!el) return;
+  () => {
+    const el = props.element
+    if (!el) return null
+
+    return {
+      id: el.id,
+      content: el.content,
+      fontSize: el.fontSize,
+      color: el.color,
+      x: el.x,
+      y: el.y,
+    }
+  },
+  (snapshot) => {
+    if (!snapshot) return;
 
     isSyncing = true
-    local.content = el.content;
-    local.fontSize = el.fontSize || 16;
-    local.color = el.color || "#000000";
-    local.x = el.x;
-    local.y = el.y;
+    local.content = snapshot.content;
+    local.fontSize = snapshot.fontSize || 16;
+    local.color = snapshot.color || "#000000";
+    local.x = snapshot.x;
+    local.y = snapshot.y;
     isSyncing = false
   },
   { immediate: true }
@@ -87,6 +99,18 @@ watch(local, () => {
 // apply command
 const apply = () => {
   const el = props.element;
+
+  if (!el) return;
+
+  if (
+    el.content === local.content &&
+    (el.fontSize || 16) === local.fontSize &&
+    (el.color || "#000000") === local.color &&
+    el.x === local.x &&
+    el.y === local.y
+  ) {
+    return
+  }
 
   const command = createUpdateStyleCommand(store, {
     id: el.id,

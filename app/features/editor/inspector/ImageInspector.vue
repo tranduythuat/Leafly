@@ -60,14 +60,23 @@ let isSyncing = false;
 
 // 👉 sync từ store → local
 watch(
-  () => props.element,
-  (el) => {
-    if (!el) return;
+  () => {
+    const el = props.element
+    if (!el) return null
+
+    return {
+      id: el.id,
+      width: el.width,
+      height: el.height,
+    }
+  },
+  (snapshot) => {
+    if (!snapshot) return;
 
     isSyncing = true;
 
-    local.width = el.width;
-    local.height = el.height;
+    local.width = snapshot.width;
+    local.height = snapshot.height;
 
     isSyncing = false;
   },
