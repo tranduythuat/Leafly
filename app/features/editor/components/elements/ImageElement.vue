@@ -1,10 +1,11 @@
 <template>
-  <div :style="style" @mousedown.stop="onMouseDown">
+  <div :style="style" @click.stop @mousedown.stop="onMouseDown">
     <img :src="element.src" draggable="false" />
 
     <div
       v-if="isSelected"
       class="resize-handle"
+      @click.stop
       @mousedown.stop="startResize"
     />
   </div>
@@ -13,9 +14,10 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useEditorStore } from "../../store/editorStore";
+import type { ImageElement as ImageElementType } from "../../types";
 
 const props = defineProps<{
-  element: any;
+  element: ImageElementType;
 }>();
 
 const store = useEditorStore();
