@@ -6,6 +6,7 @@ import type {
   EditorElement,
   EditorUIState,
   Section,
+  SectionStylePatch,
   SectionStyle,
 } from '../types'
 import { sectionPresets } from "../data/sectionPresets"
@@ -34,6 +35,8 @@ const createSectionId = () =>
     ? crypto.randomUUID()
     : Date.now().toString()
 
+const createElementId = () => createSectionId()
+
 const cloneSection = (section: Section): Section =>
   JSON.parse(JSON.stringify(section))
 
@@ -41,6 +44,9 @@ const cloneElement = (element: EditorElement): EditorElement =>
   JSON.parse(JSON.stringify(element))
 
 const initialSectionId = createSectionId()
+
+const getNextZIndex = (section: Section) =>
+  Math.max(0, ...section.elements.map((element) => element.zIndex || 0)) + 1
 
 export const useEditorStore = defineStore("editor", {
   state: (): EditorState => ({
@@ -59,12 +65,13 @@ export const useEditorStore = defineStore("editor", {
               x: 100,
               y: 100,
               width: 320,
-              height: 48,
+              height: 40,
               zIndex: 1,
               content: "Hello Leafly",
               color: '#36402d',
               alignment: 'center',
               fontSize: 32,
+              scale: 1,
             },
             {
               id: "2",
@@ -72,12 +79,13 @@ export const useEditorStore = defineStore("editor", {
               x: 100,
               y: 180,
               width: 420,
-              height: 80,
+              height: 40,
               zIndex: 2,
               content: "Elegant online invitation builder",
               color: '#62744d',
               alignment: 'center',
               fontSize: 18,
+              scale: 1,
             },
           ],
         },
@@ -105,6 +113,19 @@ export const useEditorStore = defineStore("editor", {
         this.selectedIds.includes(element.id)
       )
     },
+    activeSectionElements(): EditorElement[] {
+      return this.activeSection?.elements ?? []
+    },
+    activeSectionSelectedElements(): EditorElement[] {
+      return this.activeSectionElements.filter((element) =>
+        this.selectedIds.includes(element.id)
+      )
+    },
+    selectedElement(): EditorElement | null {
+      return this.selectedIds.length === 1
+        ? this.findElementById(this.selectedIds[0]) ?? null
+        : null
+    },
   },
 
   actions: {
@@ -119,10 +140,18 @@ export const useEditorStore = defineStore("editor", {
     },
 
     findElementById(id: string) {
-      return this.findSectionByElementId(id)?.elements.find(
-        (element) => element.id === id
-      )
+      for (const section of this.document.sections) {
+        const element = section.elements.find((el) => el.id === id);
+        if (element) return element;
+      }
+      return null; // Return null if no element is found
     },
+
+    // findElementById(id: string) {
+    //   return this.findSectionByElementId(id)?.elements.find(
+    //     (element) => element.id === id
+    //   )
+    // },
 
     replaceSections(sections: Section[]) {
       this.document.sections = sections
@@ -146,6 +175,10 @@ export const useEditorStore = defineStore("editor", {
 
     selectSection(id: string | null) {
       this.ui.activeSectionId = id
+      this.ui.selectedIds = []
+    },
+
+    clearSelection() {
       this.ui.selectedIds = []
     },
 
@@ -201,19 +234,85 @@ export const useEditorStore = defineStore("editor", {
       if (!section) return
     
       section.elements.push(el)
+      this.ui.selectedIds = [el.id]
+    },
+
+    rotate(id: string, rotation: number) {
+      const el = this.findElementById(id)
+      if (!el) return
+      el.rotation = rotation  
+    },
+
+    insertTextBlock(
+      variant: "heading" | "paragraph" | "quote" = "paragraph"
+    ) {
+      const section = this.activeSection
+      if (!section) return
+
+      const presets = {
+        heading: {
+          content: "Our Story",
+          width: 360,
+          height: 56,
+          fontSize: 36,
+          color: "#36402d",
+          alignment: "center" as const,
+        },
+        paragraph: {
+          content: "Share the details of your celebration here.",
+          width: 420,
+          height: 72,
+          fontSize: 18,
+          color: "#62744d",
+          alignment: "center" as const,
+        },
+        quote: {
+          content: "\"A little note of love and joy.\"",
+          width: 400,
+          height: 60,
+          fontSize: 20,
+          color: "#7e876d",
+          alignment: "center" as const,
+        },
+      }
+
+      const preset = presets[variant]
+      const element: EditorElement = {
+        id: createElementId(),
+        type: "text",
+        x: 100,
+        y: 120 + section.elements.length * 28,
+        width: preset.width,
+        height: preset.height,
+        zIndex: getNextZIndex(section),
+        content: preset.content,
+        fontSize: preset.fontSize,
+        color: preset.color,
+        alignment: preset.alignment,
+      }
+
+      this.addElement(element)
+    },
+
+    insertImageBlock() {
+      this.addImage("/img/1.jpg")
     },
 
     select(id: string, isMulti = false) {
       const section = this.findSectionByElementId(id)
-      if (section) {
-        this.ui.activeSectionId = section.id
-      }
+      if (!section) return
+
+      const sameSectionSelectedIds = this.ui.selectedIds.filter(
+        (selectedId) => this.findSectionByElementId(selectedId)?.id === section.id
+      )
+
+      this.ui.activeSectionId = section.id
 
       if (isMulti) {
-        if (this.ui.selectedIds.includes(id)) {
-          this.ui.selectedIds = this.ui.selectedIds.filter((item) => item !== id)
+        if (sameSectionSelectedIds.includes(id)) {
+          this.ui.selectedIds = sameSectionSelectedIds.filter((item) => item !== id)
         } else {
-          this.ui.selectedIds.push(id)
+          this.ui.selectedIds = [...sameSectionSelectedIds, id]
         }
       } else {
         this.ui.selectedIds = [id]
@@ -234,11 +333,55 @@ export const useEditorStore = defineStore("editor", {
       el.content = content;
     },
 
-    resize(id: string, width: number, height: number) {
+    resize(id: string, width: number, height: number, fontSize: number) {
       const el = this.findElementById(id)
       if (!el) return
       el.width = width
       el.height = height
+
+      if (el.type === "text") {
+        el.fontSize = fontSize;
+      } 
+    },
+
+    removeElement(id: string) {
+      const section = this.findSectionByElementId(id)
+      if (!section) return
+
+      section.elements = section.elements.filter((element) => element.id !== id)
+      this.ui.selectedIds = this.ui.selectedIds.filter((selectedId) => selectedId !== id)
+    },
+
+    duplicateElement(id: string) {
+      const section = this.findSectionByElementId(id)
+      const element = this.findElementById(id)
+      if (!section || !element) return
+
+      const clone = cloneElement(element)
+      clone.id = createElementId()
+      clone.x += 24
+      clone.y += 24
+      clone.zIndex += 1
+
+      section.elements.push(clone)
+      this.ui.selectedIds = [clone.id]
+      this.ui.activeSectionId = section.id
+    },
+
+    updateSectionStyle(id: string, patch: SectionStylePatch) {
+      const section = this.findSectionById(id)
+      if (!section) return
+
+      section.style = {
+        ...section.style,
+        ...patch,
+        background: patch.background
+          ? {
+              ...section.style.background,
+              ...patch.background,
+            }
+          : section.style.background,
+      }
     },
 
     executeCommand(command: Command) {
@@ -260,17 +403,22 @@ export const useEditorStore = defineStore("editor", {
       const section = this.activeSection
       if (!section) return
 
-      const maxZ = Math.max(0, ...section.elements.map((element) => element.zIndex || 0))
-      section.elements.push({
-        id: createSectionId(),
+      const image: EditorElement = {
+        id: createElementId(),
         type: "image",
         x: 100,
         y: 100,
         width: 200,
         height: 150,
-        zIndex: maxZ + 1,
-        src
-      })
+        zIndex: getNextZIndex(section),
+        src,
+        style: {
+          objectFit: "cover",
+        }
+      }
+
+      section.elements.push(image)
+      this.ui.selectedIds = [image.id]
     },
     setBackground(type: 'color' | 'image', value: string) {
       this.document.background = { type, value }

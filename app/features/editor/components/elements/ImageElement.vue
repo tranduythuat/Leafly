@@ -1,6 +1,14 @@
 <template>
   <div :style="style" @click.stop @mousedown.stop="onMouseDown">
-    <img :src="element.src" draggable="false" />
+    <ElementToolbar v-if="isSelected && store.selectedIds.length === 1" :element="element" />
+    <img 
+      :src="element.src" 
+      :style="{
+        width: element.width + 'px',
+        height: element.height + 'px',
+        objectFit: element.style?.objectFit || 'cover'
+      }" draggable="false" 
+      />
 
     <div
       v-if="isSelected"
@@ -15,6 +23,7 @@
 import { computed } from "vue";
 import { useEditorStore } from "../../store/editorStore";
 import type { ImageElement as ImageElementType } from "../../types";
+import ElementToolbar from "./ElementToolbar.vue";
 
 const props = defineProps<{
   element: ImageElementType;
@@ -30,7 +39,7 @@ const style = computed(() => ({
   top: props.element.y + "px",
   width: props.element.width + "px",
   height: props.element.height + "px",
-  border: isSelected.value ? "1px solid blue" : "none",
+  border: isSelected.value ? "1px solid #6f8560" : "none",
   cursor: "move",
 }));
 

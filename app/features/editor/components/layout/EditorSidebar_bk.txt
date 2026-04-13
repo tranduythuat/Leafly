@@ -1,0 +1,257 @@
+<template>
+  <aside class="editor-sidebar">
+    <section class="editor-sidebar__group">
+      <div class="editor-sidebar__group-header">
+        <span>Theme Presets</span>
+        <span class="editor-sidebar__group-meta">2</span>
+      </div>
+
+      <div class="editor-sidebar__theme-grid">
+        <button class="editor-sidebar__theme-card editor-sidebar__theme-card--sage" type="button">
+          Sage
+        </button>
+        <button class="editor-sidebar__theme-card editor-sidebar__theme-card--blush" type="button">
+          Blush
+        </button>
+      </div>
+    </section>
+
+    <section class="editor-sidebar__group">
+      <div class="editor-sidebar__group-header">
+        <span>Blocks</span>
+      </div>
+
+      <div class="editor-sidebar__block-list">
+        <button class="editor-sidebar__block-card" type="button" @click="insertText('heading')">
+          <strong>Heading</strong>
+          <span>Large title block</span>
+        </button>
+        <button class="editor-sidebar__block-card" type="button" @click="insertText('paragraph')">
+          <strong>Paragraph</strong>
+          <span>Body content block</span>
+        </button>
+        <button class="editor-sidebar__block-card" type="button" @click="insertText('quote')">
+          <strong>Quote</strong>
+          <span>Editorial pull quote</span>
+        </button>
+        <button class="editor-sidebar__block-card" type="button" @click="store.insertImageBlock()">
+          <strong>Image</strong>
+          <span>Photo placeholder</span>
+        </button>
+        <button class="editor-sidebar__block-card" type="button" @click="store.addSection()">
+          <strong>Blank Section</strong>
+          <span>Custom layout</span>
+        </button>
+      </div>
+    </section>
+
+    <section class="editor-sidebar__group">
+      <div class="editor-sidebar__group-header">
+        <span>Assets</span>
+      </div>
+
+      <div class="editor-sidebar__asset-actions">
+        <label class="editor-sidebar__upload-btn">
+          Upload image
+          <input type="file" accept="image/*" @change="onUpload" />
+        </label>
+        <label class="editor-sidebar__upload-btn editor-sidebar__upload-btn--muted">
+          Canvas background
+          <input type="file" accept="image/*" @change="onUploadBg" />
+        </label>
+      </div>
+    </section>
+
+    <section class="editor-sidebar__order">
+      <div class="editor-sidebar__group-header">
+        <span>Section Order</span>
+        <span class="editor-sidebar__group-meta">{{ store.sections.length }}</span>
+      </div>
+
+      <draggable v-model="sections" item-key="id" class="editor-sidebar__sections">
+        <template #item="{ element }">
+          <button
+            class="editor-sidebar__section-item"
+            :class="{ 'editor-sidebar__section-item--active': store.activeSectionId === element.id }"
+            type="button"
+            @click="store.selectSection(element.id)"
+          >
+            <span class="editor-sidebar__section-grip">::</span>
+            <span class="editor-sidebar__section-name">{{ element.name }}</span>
+          </button>
+        </template>
+      </draggable>
+    </section>
+  </aside>
+</template>
+
+<script setup lang="ts">
+import { computed } from "vue";
+import draggable from "vuedraggable";
+import { useEditorStore } from "../../store/editorStore";
+
+const store = useEditorStore();
+const sections = computed({
+  get: () => store.sections,
+  set: (value) => store.replaceSections(value),
+});
+
+const insertText = (variant: "heading" | "paragraph" | "quote") => {
+  store.insertTextBlock(variant);
+};
+
+const onUpload = (e: Event) => {
+  const input = e.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+
+  const url = URL.createObjectURL(file);
+  store.addImage(url);
+  input.value = "";
+};
+
+const onUploadBg = (e: Event) => {
+  const input = e.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+
+  const url = URL.createObjectURL(file);
+  store.setBackground("image", url);
+  input.value = "";
+};
+</script>
+
+<style scoped lang="scss">
+.editor-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 260px;
+  padding: 1rem;
+  border-right: 1px solid #ebe5da;
+  background:
+    linear-gradient(180deg, rgba(253, 252, 249, 0.98), rgba(250, 248, 241, 0.98));
+  overflow: auto;
+
+  &__group,
+  &__order {
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #ece6db;
+  }
+
+  &__group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.85rem;
+    color: #62744d;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  &__group-meta {
+    color: #a0a78d;
+    font-size: 0.75rem;
+  }
+
+  &__theme-grid,
+  &__block-list,
+  &__asset-actions,
+  &__sections {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  &__theme-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  &__theme-card,
+  &__block-card,
+  &__upload-btn,
+  &__section-item {
+    border: 1px solid #dcd6cb;
+    border-radius: 14px;
+    background: #fff;
+  }
+
+  &__theme-card {
+    min-height: 72px;
+    color: #36402d;
+    font-weight: 600;
+  }
+
+  &__theme-card--sage {
+    background: linear-gradient(135deg, #eef1e6, #dfe7d1);
+  }
+
+  &__theme-card--blush {
+    background: linear-gradient(135deg, #fbefeb, #f2d9cd);
+  }
+
+  &__block-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.1rem;
+    padding: 0.1rem 0.95rem;
+    text-align: left;
+
+    strong {
+      color: #36402d;
+      font-size: 0.95rem;
+    }
+
+    span {
+      color: #8c927d;
+      font-size: 0.78rem;
+    }
+  }
+
+  &__upload-btn {
+    display: block;
+    padding: 0.8rem 0.9rem;
+    color: #4d5942;
+    font-size: 0.88rem;
+    text-align: center;
+    cursor: pointer;
+
+    input {
+      display: none;
+    }
+  }
+
+  &__upload-btn--muted {
+    background: #f8f5ee;
+  }
+
+  &__section-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.8rem 0.9rem;
+    cursor: grab;
+    color: #44513a;
+    text-align: left;
+  }
+
+  &__section-item--active {
+    border-color: #95a87d;
+    background: #f4f7ef;
+  }
+
+  &__section-grip {
+    color: #adb29d;
+    letter-spacing: -0.1em;
+  }
+
+  &__section-name {
+    font-size: 0.92rem;
+  }
+}
+</style>

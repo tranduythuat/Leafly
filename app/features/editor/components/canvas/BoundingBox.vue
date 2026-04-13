@@ -12,10 +12,16 @@ import { computed } from "vue";
 import { useEditorStore } from "../../store/editorStore";
 import { createGroupMoveCommand } from '../../core/commands/moveGroupElement'
 
+const props = defineProps<{
+  sectionId: string
+}>()
+
 const store = useEditorStore();
 
 const box = computed(() => {
-  const selected = store.selectedElements
+  if (store.activeSectionId !== props.sectionId) return null
+
+  const selected = store.activeSectionSelectedElements
 
   // Only show draggable group box when multiple items are selected.
   if (selected.length < 2) return null;
@@ -41,10 +47,10 @@ const style = computed(() => ({
   top: box.value?.y + "px",
   width: box.value?.width + "px",
   height: box.value?.height + "px",
-  border: "1px dashed blue",
+  border: "1px dashed #6f8560",
   pointerEvents: "auto",
   cursor: "move",
-  zIndex: 1,
+  zIndex: 20,
 }));
 
 // =====================
@@ -136,5 +142,7 @@ const stopDrag = () => {
 <style scoped>
 .bounding-box {
   box-sizing: border-box;
+  border-radius: 14px;
+  background: rgba(111, 133, 96, 0.04);
 }
 </style>
