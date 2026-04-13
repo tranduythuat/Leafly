@@ -75,7 +75,7 @@ const resolveComponent = (el: EditorElement) => {
   margin: 0 auto;
   /* border-radius: 24px; */
   box-shadow: 0 12px 40px rgba(54, 64, 45, 0.08);
-  overflow: hidden;
+  /* overflow: hidden; */
 }
 
 .section-canvas__header {
