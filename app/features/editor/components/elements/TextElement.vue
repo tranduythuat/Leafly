@@ -104,6 +104,7 @@ import { computed, ref, watch, onMounted, onUnmounted } from "vue";
 import { useEditorStore } from "../../store/editorStore";
 import { createResizeCommand } from "../../core/commands/resizeElement";
 import { createGroupMoveCommand } from "../../core/commands/moveGroupElement";
+import { createRotateCommand } from '../../core/commands/rotateElement';
 import ElementToolbar from "./ElementToolbar.vue";
 import type { TextElement as TextElementType } from "../../types";
 
@@ -420,7 +421,9 @@ const stopResize = () => {
 let rotateCenterX = 0;
 let rotateCenterY = 0;
 let rotateStartAngle = 0;
+
 let rotateInitial = 0;
+let lastRotation = 0
 
 const isRotating = ref(false);
 const tooltipX = ref(0);
@@ -443,6 +446,8 @@ const startRotate = (e: MouseEvent) => {
   }
 
   rotateInitial = props.element.rotation || 0;
+  lastRotation = rotateInitial
+
   rotateStartAngle =
     Math.atan2(e.clientY - rotateCenterY, e.clientX - rotateCenterX) *
     (180 / Math.PI);
@@ -461,7 +466,10 @@ const onRotate = (e: MouseEvent) => {
     Math.atan2(e.clientY - rotateCenterY, e.clientX - rotateCenterX) *
     (180 / Math.PI);
 
-  store.rotate(props.element.id, rotateInitial + (angle - rotateStartAngle));
+  const newRotation = rotateInitial + (angle - rotateStartAngle)
+  lastRotation = newRotation
+
+  store.rotate(props.element.id, newRotation);
 
   // Tooltip theo sát chuột
   tooltipX.value = e.clientX + 14;
@@ -471,6 +479,16 @@ const onRotate = (e: MouseEvent) => {
 const stopRotate = () => {
   isRotating.value = false;
   document.body.style.cursor = "";
+
+  if (lastRotation !== rotateInitial) {
+    const command = createRotateCommand(store, {
+      id: props.element.id,
+      oldRotation: rotateInitial,
+      newRotation: lastRotation
+    })
+    store.executeCommand(command)
+  }
+
   window.removeEventListener("mousemove", onRotate);
   window.removeEventListener("mouseup", stopRotate);
 };

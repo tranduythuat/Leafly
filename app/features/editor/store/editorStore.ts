@@ -71,6 +71,7 @@ export const useEditorStore = defineStore("editor", {
               color: '#36402d',
               alignment: 'center',
               fontSize: 32,
+              rotation: 0,
               scale: 1,
             },
             {
@@ -85,6 +86,7 @@ export const useEditorStore = defineStore("editor", {
               color: '#62744d',
               alignment: 'center',
               fontSize: 18,
+              rotation: 0,
               scale: 1,
             },
           ],
@@ -240,7 +242,7 @@ export const useEditorStore = defineStore("editor", {
     rotate(id: string, rotation: number) {
       const el = this.findElementById(id)
       if (!el) return
-      el.rotation = rotation  
+      (el as any).rotation = rotation
     },
 
     insertTextBlock(
