@@ -80,7 +80,7 @@ export const useEditorStore = defineStore("editor", {
               x: 100,
               y: 180,
               width: 420,
-              height: 40,
+              height: 20,
               zIndex: 2,
               content: "Elegant online invitation builder",
               color: '#62744d',

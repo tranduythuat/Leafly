@@ -194,6 +194,7 @@ const style = computed(() => ({
   whiteSpace: "pre-wrap",
   transformOrigin: "center center",
   transform: `rotate(${props.element.rotation || 0}deg)`,
+  lineHeight: 1,
 }));
 
 const onMouseDown = (e: MouseEvent) => {
