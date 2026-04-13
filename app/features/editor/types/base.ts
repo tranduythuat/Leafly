@@ -9,7 +9,7 @@ export interface Position {
 
 export interface Size {
   width: number
-  height: number
+  height: number 
 }
 
 export interface BaseElement extends Position, Size {
@@ -22,12 +22,16 @@ export interface TextElement extends BaseElement {
   content: string
   fontSize?: number
   color?: string
-  alignment?: Alignment
+  alignment?: Alignment,
+  rotation?: number
 }
 
 export interface ImageElement extends BaseElement {
   type: 'image'
   src: string
+  style?: {
+    objectFit?: "cover" | "contain" | "fill"
+  }
 }
 
 export type CanvasElement = TextElement | ImageElement

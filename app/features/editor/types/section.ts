@@ -13,6 +13,10 @@ export interface SectionStyle {
   align: Alignment
 }
 
+export type SectionStylePatch = Partial<SectionStyle> & {
+  background?: Partial<BackgroundStyle>
+}
+
 export interface Section {
   id: string
   name: string

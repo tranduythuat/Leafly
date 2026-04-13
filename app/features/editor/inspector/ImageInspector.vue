@@ -1,20 +1,28 @@
 <template>
-  <div v-if="element">
-    <h3>Image</h3>
+  <div v-if="element" class="inspector-form">
+    <div class="inspector-form__section">
+      <div class="inspector-form__section-title">Image Size</div>
 
-    <div class="field">
-      <label>Width</label>
-      <input type="number" v-model.number="local.width" />
+      <div class="field field--row">
+        <div>
+          <label>Width</label>
+          <input type="number" v-model.number="local.width" />
+        </div>
+
+        <div>
+          <label>Height</label>
+          <input type="number" v-model.number="local.height" />
+        </div>
+      </div>
     </div>
 
-    <div class="field">
-      <label>Height</label>
-      <input type="number" v-model.number="local.height" />
-    </div>
+    <div class="inspector-form__section">
+      <div class="inspector-form__section-title">Layer</div>
 
-    <div class="field">
-      <button @click="bringToFront">Bring to front</button>
-      <button @click="sendToBack">Send to back</button>
+      <div class="field field--actions">
+        <button class="ghost-btn" @click="bringToFront">Bring to front</button>
+        <button class="ghost-btn" @click="sendToBack">Send to back</button>
+      </div>
     </div>
   </div>
 </template>
@@ -24,6 +32,7 @@ import { reactive, watch } from "vue";
 import { useEditorStore } from "../store/editorStore";
 import { createResizeCommand } from "../core/commands/resizeImage";
 import { debounce } from "../utils/debounce";
+import type { ImageElement } from "../types";
 import {
   createBringToFrontCommand,
   createSendToBackCommand
@@ -44,7 +53,7 @@ const sendToBack = () => {
 }
 
 const props = defineProps<{
-  element?: any;
+  element?: ImageElement;
 }>();
 
 const store = useEditorStore();
@@ -60,14 +69,23 @@ let isSyncing = false;
 
 // 👉 sync từ store → local
 watch(
-  () => props.element,
-  (el) => {
-    if (!el) return;
+  () => {
+    const el = props.element
+    if (!el) return null
+
+    return {
+      id: el.id,
+      width: el.width,
+      height: el.height,
+    }
+  },
+  (snapshot) => {
+    if (!snapshot) return;
 
     isSyncing = true;
 
-    local.width = el.width;
-    local.height = el.height;
+    local.width = snapshot.width;
+    local.height = snapshot.height;
 
     isSyncing = false;
   },
@@ -109,14 +127,68 @@ watch(
 );
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+.inspector-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  &__section {
+    padding: 1rem;
+    border: 1px solid #e5dfd3;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.8);
+  }
+
+  &__section-title {
+    margin-bottom: 0.85rem;
+    color: #7e876d;
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+}
+
 .field {
   margin-bottom: 12px;
+}
+
+.field--row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.field--actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 0;
 }
 
 label {
   display: block;
   font-size: 12px;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  color: #6f7960;
+}
+
+input {
+  width: 100%;
+  border: 1px solid #d8d2c6;
+  border-radius: 12px;
+  padding: 0.7rem 0.8rem;
+  background: #fffdfa;
+  color: #36402d;
+  box-sizing: border-box;
+}
+
+.ghost-btn {
+  border: 1px solid #d8d2c6;
+  border-radius: 14px;
+  background: #fff;
+  color: #4d5942;
+  padding: 0.8rem 0.9rem;
 }
 </style>

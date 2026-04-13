@@ -1,37 +1,40 @@
 <template>
-  <div>
-    <h3>Text</h3>
+  <div class="inspector-form">
+    <div class="inspector-form__section">
+      <div class="inspector-form__section-title">Typography</div>
 
-    <!-- Content -->
-    <div class="field">
-      <label>Content</label>
-      <input v-model="local.content" />
+      <div class="field">
+        <label>Content</label>
+        <input v-model="local.content" />
+      </div>
+
+      <div class="field">
+        <label>Font Size</label>
+        <input type="number" v-model.number="local.fontSize" />
+      </div>
+
+      <div class="field">
+        <label>Color</label>
+        <input type="color" v-model="local.color" />
+      </div>
     </div>
 
-    <!-- Font size -->
-    <div class="field">
-      <label>Font Size</label>
-      <input type="number" v-model.number="local.fontSize" />
+    <div class="inspector-form__section">
+      <div class="inspector-form__section-title">Layout</div>
+
+      <div class="field field--row">
+        <div>
+          <label>X</label>
+          <input type="number" v-model.number="local.x" />
+        </div>
+        <div>
+          <label>Y</label>
+          <input type="number" v-model.number="local.y" />
+        </div>
+      </div>
     </div>
 
-    <!-- Color -->
-    <div class="field">
-      <label>Color</label>
-      <input type="color" v-model="local.color" />
-    </div>
-
-    <!-- Position -->
-    <div class="field">
-      <label>X</label>
-      <input type="number" v-model.number="local.x" />
-    </div>
-
-    <div class="field">
-      <label>Y</label>
-      <input type="number" v-model.number="local.y" />
-    </div>
-
-    <button @click="apply">Apply</button>
+    <button class="apply-btn" @click="apply">Apply</button>
   </div>
 </template>
 
@@ -40,10 +43,11 @@ import { reactive, watch } from "vue";
 import { useEditorStore } from "../store/editorStore";
 import { debounce } from '@/features/editor/utils/debounce'
 import { createUpdateStyleCommand } from "../core/commands/updateStyle";
+import type { TextElement } from "../types";
 
 // props
 const props = defineProps<{
-  element: any;
+  element: TextElement;
 }>();
 
 let isSyncing = false
@@ -64,16 +68,28 @@ const local = reactive({
 
 // sync khi đổi selection
 watch(
-  () => props.element,
-  (el) => {
-    if (!el) return;
+  () => {
+    const el = props.element
+    if (!el) return null
+
+    return {
+      id: el.id,
+      content: el.content,
+      fontSize: el.fontSize,
+      color: el.color,
+      x: el.x,
+      y: el.y,
+    }
+  },
+  (snapshot) => {
+    if (!snapshot) return;
 
     isSyncing = true
-    local.content = el.content;
-    local.fontSize = el.fontSize || 16;
-    local.color = el.color || "#000000";
-    local.x = el.x;
-    local.y = el.y;
+    local.content = snapshot.content;
+    local.fontSize = snapshot.fontSize || 16;
+    local.color = snapshot.color || "#000000";
+    local.x = snapshot.x;
+    local.y = snapshot.y;
     isSyncing = false
   },
   { immediate: true }
@@ -87,6 +103,18 @@ watch(local, () => {
 // apply command
 const apply = () => {
   const el = props.element;
+
+  if (!el) return;
+
+  if (
+    el.content === local.content &&
+    (el.fontSize || 16) === local.fontSize &&
+    (el.color || "#000000") === local.color &&
+    el.x === local.x &&
+    el.y === local.y
+  ) {
+    return
+  }
 
   const command = createUpdateStyleCommand(store, {
     id: el.id,
@@ -112,14 +140,61 @@ const apply = () => {
 };
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+.inspector-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  &__section {
+    padding: 1rem;
+    border: 1px solid #e5dfd3;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.8);
+  }
+
+  &__section-title {
+    margin-bottom: 0.85rem;
+    color: #7e876d;
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+}
+
 .field {
   margin-bottom: 12px;
+}
+
+.field--row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
 }
 
 label {
   display: block;
   font-size: 12px;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  color: #6f7960;
+}
+
+input {
+  width: 100%;
+  border: 1px solid #d8d2c6;
+  border-radius: 12px;
+  padding: 0.7rem 0.8rem;
+  background: #fffdfa;
+  color: #36402d;
+  box-sizing: border-box;
+}
+
+.apply-btn {
+  border: 1px solid #7b8f62;
+  border-radius: 14px;
+  background: #7b8f62;
+  color: #fff;
+  padding: 0.85rem 1rem;
 }
 </style>
