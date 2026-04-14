@@ -1,19 +1,11 @@
 <template>
-  <div ref="elRef" :style="style" @click.stop @mousedown.stop="onMouseDown">
+  <div ref="elRef" :data-id="element.id" :style="style" @click.stop @mousedown.stop="onMouseDown">
     <ElementToolbar
       v-if="isSelected && store.selectedIds.length === 1"
       :element="element"
     />
     {{ element.content }}
 
-    <!-- Resize handle -->
-    <!-- <div
-      key=""
-      v-if="isSelected"
-      class="resize-handle"
-      @click.stop
-      @mousedown.stop="startResize"
-    /> -->
     <div
       v-if="isSelected && (!isResizing || activeResizeHandle === 'tl')"
       class="resize-handle tl"
@@ -37,6 +29,18 @@
       class="resize-handle br"
       @click.stop
       @mousedown.stop="startResize($event, 'br')"
+    />
+    <div
+      v-if="isSelected && (!isResizing || activeResizeHandle === 'left')"
+      class="resize-handle left"
+      @click.stop
+      @mousedown.stop="startResize($event, 'left')"
+    />
+    <div
+      v-if="isSelected && (!isResizing || activeResizeHandle === 'right')"
+      class="resize-handle right"
+      @click.stop
+      @mousedown.stop="startResize($event, 'right')"
     />
   </div>
 
@@ -183,7 +187,7 @@ const style = computed(() => ({
   left: props.element.x + "px",
   top: props.element.y + "px",
   width: props.element.width + "px",
-  height: props.element.height + "px",
+  height: props.element.heightMode === 'auto' ? 'auto' : props.element.height + 'px',
   border: isSelected.value ? "1px solid blue" : "none",
   cursor: isSelected.value ? "move" : "default",
   userSelect: "none",
@@ -283,7 +287,7 @@ const stopDrag = () => {
 // RESIZE (proportional, horizontal only)
 // =====================
 let resizeDir = "br"
-const activeResizeHandle = ref<string | "tl" | "tr" | "bl" | "br">(null)
+const activeResizeHandle = ref<string | "tl" | "tr" | "bl" | "br" | "left" | "right" >(null)
 let isResizing = ref(false);
 
 let startWidth = 0
@@ -312,11 +316,16 @@ const startResize = (e: MouseEvent, dir: string) => {
   startY = e.clientY
 
   startWidth = props.element.width
-  startHeight = props.element.height
   startLeft = props.element.x
   startTop = props.element.y
 
   initialFontSize = props.element.fontSize || 16
+
+    // Đọc height thực từ DOM — props.element.height có thể là 'auto'
+  const domEl = document.querySelector(`[data-id="${props.element.id}"]`) as HTMLElement | null
+  const actualHeight = domEl ? domEl.clientHeight : (typeof props.element.height === 'number' ? props.element.height : 40)
+  startHeight = actualHeight
+
   aspectRatio = startWidth / startHeight
 
   // 🔥 lưu state ban đầu
@@ -328,6 +337,14 @@ const startResize = (e: MouseEvent, dir: string) => {
     fontSize: props.element.fontSize || 16,
   }
 
+  if (dir === 'left' || dir === 'right') {
+    store.setHeightMode(props.element.id, 'auto')
+    store.resize(props.element.id, props.element.width, actualHeight, props.element.fontSize)
+  }
+
+  document.body.style.userSelect = "none"
+  document.body.style.cursor = dir === 'left' || dir === 'right' ? 'ew-resize' : 'nwse-resize'
+
   window.addEventListener("mousemove", onResize)
   window.addEventListener("mouseup", stopResize)
 }
@@ -335,6 +352,24 @@ const startResize = (e: MouseEvent, dir: string) => {
 const onResize = (e: MouseEvent) => {
   const dx = e.clientX - startX
   const dy = e.clientY - startY
+
+  // ===== EDGE HANDLES: chỉ thay đổi width, height auto theo content =====
+  if (resizeDir === 'right' || resizeDir === 'left') {
+    let newWidth = resizeDir === 'right'
+      ? startWidth + dx
+      : startWidth - dx
+ 
+    newWidth = Math.max(50, Math.round(newWidth))
+ 
+    const newX = resizeDir === 'left'
+      ? startLeft + (startWidth - newWidth)
+      : startLeft
+ 
+    store.move(props.element.id, newX, props.element.y)
+    // Truyền height = -1 để store biết không cập nhật height
+    store.resize(props.element.id, newWidth, undefined, props.element.fontSize ?? 16)
+    return
+  }
 
   let newWidth = startWidth
   let newHeight = startHeight
@@ -379,8 +414,21 @@ const onResize = (e: MouseEvent) => {
 }
 
 const stopResize = () => {
+  document.body.style.userSelect = ""
+  document.body.style.cursor = ""
+
   const el = store.findElementById(props.element.id)
   if (!el) return
+
+  // Edge handles: lấy height thực từ DOM (do height: auto)
+  const isEdge = resizeDir === 'left' || resizeDir === 'right'
+
+  if (isEdge) {
+    const domEl = elRef.value
+    const actualHeight = domEl?.clientHeight ?? el.height
+
+    store.resize(props.element.id, el.width, actualHeight, el.fontSize ?? 16)
+  }
 
   const hasChanged =
     el.x !== initialRect.x ||
@@ -389,6 +437,7 @@ const stopResize = () => {
     el.height !== initialRect.height
 
   if (hasChanged) {
+    store.setHeightMode(props.element.id, 'fixed')
     store.executeCommand(
       createResizeCommand(store, {
         id: props.element.id,
@@ -526,6 +575,40 @@ const stopRotate = () => {
   bottom: -6px;
   cursor: nwse-resize;
 }
+
+.resize-handle.left {
+  width: 8px;
+  height: 18px;
+  background: blue;
+  position: absolute;
+  z-index: 3;
+  cursor: ew-resize;
+  left: -5px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-radius: 4px;
+  &.is-active,
+  &:hover {
+    background: #3b82f6;
+  }
+}
+
+.resize-handle.right {
+    width: 8px;
+    height: 18px;
+    background: blue;
+    position: absolute;
+    z-index: 3;
+    cursor: ew-resize;
+    right: -5px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-radius: 4px;
+    &.is-active,
+    &:hover {
+      background: #3b82f6;
+    }
+  }
 </style>
 
 <!-- Global — scoped hash không reach được DOM teleported ra body -->

@@ -26,7 +26,11 @@ import { Type, Image, Music } from '@lucide/vue';
 const active = ref("text")
 
 const tabs = [
-  { key: "text", label: "Văn bản", icon: Type },
+  { 
+    key: "text", 
+    label: "Văn bản", 
+    icon: Type
+  },
   { key: "image", label: "Hình ảnh", icon: Image },
   { key: "music", label: "Âm nhạc", icon: Music }
 ]
