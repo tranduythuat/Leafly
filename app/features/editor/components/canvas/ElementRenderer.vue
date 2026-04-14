@@ -1,13 +1,5 @@
 <template>
   <div class="section-canvas" :style="sectionStyle">
-    <div class="section-canvas__header">
-      <div>
-        <div class="section-canvas__eyebrow">{{ section.type }}</div>
-        <div class="section-canvas__title">{{ section.name }}</div>
-      </div>
-      <div class="section-canvas__badge">{{ sortedElements.length }} blocks</div>
-    </div>
-
     <div v-if="!sortedElements.length" class="section-canvas__empty">
       <strong>Empty section</strong>
       <p>Add a text or image block from the left panel to start composing this section.</p>

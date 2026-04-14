@@ -17,6 +17,7 @@ const itemsMap = {
   text: [
     { id: "heading", label: "Heading" },
     { id: "paragraph", label: "Paragraph" },
+    { id: "quote", label: "Quote" },
   ],
   image: [
     { id: "gallery", label: "Album ảnh" },

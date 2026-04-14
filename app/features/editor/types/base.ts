@@ -1,6 +1,7 @@
 export type ID = string
 
 export type Alignment = "left" | "center" | "right" | "justify"
+export type HeightMode = "fixed" | "auto"
 
 export interface Position {
   x: number
@@ -9,7 +10,7 @@ export interface Position {
 
 export interface Size {
   width: number
-  height: number 
+  height: number
 }
 
 export interface BaseElement extends Position, Size {
@@ -23,6 +24,7 @@ export interface TextElement extends BaseElement {
   fontSize?: number
   color?: string
   alignment?: Alignment,
+  heightMode?: HeightMode,
   rotation?: number
 }
 

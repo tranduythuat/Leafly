@@ -10,6 +10,7 @@ import type {
   SectionStyle,
 } from '../types'
 import { sectionPresets } from "../data/sectionPresets"
+import { createInsertTextCommand } from "../core/commands/inserttextblock"
 
 let history = createHistory() 
 
@@ -26,7 +27,7 @@ const defaultBackground = {
 const defaultSectionStyle = (): SectionStyle => ({
   background: { ...defaultBackground },
   padding: 48,
-  minHeight: 320,
+  minHeight: 620,
   align: 'center',
 })
 
@@ -66,6 +67,7 @@ export const useEditorStore = defineStore("editor", {
               y: 100,
               width: 320,
               height: 40,
+              heightMode: 'auto',
               zIndex: 1,
               content: "Hello Leafly",
               color: '#36402d',
@@ -80,7 +82,8 @@ export const useEditorStore = defineStore("editor", {
               x: 100,
               y: 180,
               width: 420,
-              height: 20,
+              height: 40,
+              heightMode: 'auto',
               zIndex: 2,
               content: "Elegant online invitation builder",
               color: '#62744d',
@@ -246,54 +249,51 @@ export const useEditorStore = defineStore("editor", {
     },
 
     insertTextBlock(
-      variant: "heading" | "paragraph" | "quote" = "paragraph"
+      variant: "heading" | "paragraph" | "quote" = "paragraph",
+      sectionDOMWidth?: number,
+      sectionDOMHeight?: number,
     ) {
       const section = this.activeSection
       if (!section) return
-
+ 
       const presets = {
-        heading: {
-          content: "Our Story",
-          width: 360,
-          height: 56,
-          fontSize: 36,
-          color: "#36402d",
-          alignment: "center" as const,
-        },
-        paragraph: {
-          content: "Share the details of your celebration here.",
-          width: 420,
-          height: 72,
-          fontSize: 18,
-          color: "#62744d",
-          alignment: "center" as const,
-        },
-        quote: {
-          content: "\"A little note of love and joy.\"",
-          width: 400,
-          height: 60,
-          fontSize: 20,
-          color: "#7e876d",
-          alignment: "center" as const,
-        },
+        heading: { content: "Heading",   fontSize: 32, width: 320 },
+        paragraph: { content: "Paragraph", fontSize: 16, width: 320 },
+        quote:   { content: "Quote",     fontSize: 12, width: 320 },
       }
-
+ 
       const preset = presets[variant]
+
+      const estimatedHeight = Math.round(preset.fontSize * 1.4)
+      const sectionWidth  = sectionDOMWidth  ?? 800
+      const sectionHeight = sectionDOMHeight ?? (section.style?.minHeight ?? 320)
+
+      const x = Math.round((sectionWidth  - preset.width)    / 2)
+      const y = Math.round((sectionHeight - estimatedHeight) / 2)
+
       const element: EditorElement = {
         id: createElementId(),
         type: "text",
-        x: 100,
-        y: 120 + section.elements.length * 28,
+        x: x,
+        y: y,
         width: preset.width,
-        height: preset.height,
+        height: 40,
+        heightMode: 'auto',
         zIndex: getNextZIndex(section),
         content: preset.content,
         fontSize: preset.fontSize,
-        color: preset.color,
-        alignment: preset.alignment,
+        color: '#36402d',
+        alignment: 'center',
+        rotation: 0,
+        scale: 1,
       }
-
-      this.addElement(element)
+ 
+      const command = createInsertTextCommand(this, {
+        sectionId: section.id,
+        element,
+      })
+ 
+      this.executeCommand(command)
     },
 
     insertImageBlock() {
@@ -335,15 +335,12 @@ export const useEditorStore = defineStore("editor", {
       el.content = content;
     },
 
-    resize(id: string, width: number, height: number, fontSize: number) {
+    resize(id: string, width?: number, height?: number, fontSize?: number) {
       const el = this.findElementById(id)
       if (!el) return
-      el.width = width
-      el.height = height
-
-      if (el.type === "text") {
-        el.fontSize = fontSize;
-      } 
+      if (width !== undefined) el.width = width
+      if (height !== undefined) el.height = height
+      if (fontSize !== undefined) el.fontSize = fontSize
     },
 
     removeElement(id: string) {
@@ -384,6 +381,13 @@ export const useEditorStore = defineStore("editor", {
             }
           : section.style.background,
       }
+    },
+
+    setHeightMode(id: string, mode: 'auto' | 'fixed') { 
+      const el = this.findElementById(id)
+      if (!el || el.type !== 'text') return
+
+      (el as any).heightMode = mode   
     },
 
     executeCommand(command: Command) {
