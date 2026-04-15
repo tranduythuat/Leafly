@@ -1,5 +1,11 @@
 <template>
-  <div ref="elRef" :data-id="element.id" :style="style" @click.stop @mousedown.stop="onMouseDown">
+  <div
+    ref="elRef"
+    :data-id="element.id"
+    :style="style"
+    @click.stop
+    @mousedown.stop="onMouseDown"
+  >
     <ElementToolbar
       v-if="isSelected && store.selectedIds.length === 1"
       :element="element"
@@ -10,36 +16,42 @@
     <div
       v-if="isSelected && (!isResizing || activeResizeHandle === 'tl')"
       class="resize-handle tl"
+      :style="{ cursor: getResizeCursor('tl') }"
       @click.stop
       @mousedown.stop="startResize($event, 'tl')"
     />
     <div
       v-if="isSelected && (!isResizing || activeResizeHandle === 'tr')"
       class="resize-handle tr"
+      :style="{ cursor: getResizeCursor('tr') }"
       @click.stop
       @mousedown.stop="startResize($event, 'tr')"
     />
     <div
       v-if="isSelected && (!isResizing || activeResizeHandle === 'bl')"
       class="resize-handle bl"
+      :style="{ cursor: getResizeCursor('bl') }"
       @click.stop
       @mousedown.stop="startResize($event, 'bl')"
     />
     <div
       v-if="isSelected && (!isResizing || activeResizeHandle === 'br')"
       class="resize-handle br"
+      :style="{ cursor: getResizeCursor('br') }"
       @click.stop
       @mousedown.stop="startResize($event, 'br')"
     />
     <div
       v-if="isSelected && (!isResizing || activeResizeHandle === 'left')"
       class="resize-handle left"
+      :style="{ cursor: getResizeCursor('left') }"
       @click.stop
       @mousedown.stop="startResize($event, 'left')"
     />
     <div
       v-if="isSelected && (!isResizing || activeResizeHandle === 'right')"
       class="resize-handle right"
+      :style="{ cursor: getResizeCursor('right') }"
       @click.stop
       @mousedown.stop="startResize($event, 'right')"
     />
@@ -57,7 +69,12 @@
     </div>
     <div
       class="te-handles-pill"
-      v-if="isSelected && store.selectedIds.length === 1 && !isRotating && !isResizing"
+      v-if="
+        isSelected &&
+        store.selectedIds.length === 1 &&
+        !isRotating &&
+        !isResizing
+      "
       :style="pillStyle"
       @click.stop
       @mousedown.stop
@@ -109,7 +126,7 @@ import { computed, ref, watch, onMounted, onUnmounted } from "vue";
 import { useEditorStore } from "../../store/editorStore";
 import { createResizeCommand } from "../../core/commands/resizeElement";
 import { createGroupMoveCommand } from "../../core/commands/moveGroupElement";
-import { createRotateCommand } from '../../core/commands/rotateElement';
+import { createRotateCommand } from "../../core/commands/rotateElement";
 import ElementToolbar from "./ElementToolbar.vue";
 import type { TextElement as TextElementType } from "../../types";
 
@@ -132,19 +149,19 @@ const PILL_GAP = 22;
 function updatePillPos() {
   if (!elRef.value) return;
   const rect = elRef.value.getBoundingClientRect();
- 
+
   // Tâm thực của element
   const cx = rect.left + rect.width / 2;
   const cy = rect.top + rect.height / 2;
- 
+
   const rad = -((props.element.rotation || 0) * Math.PI) / 180;
- 
+
   // Bán kính cố định = nửa chiều cao gốc + gap
   // → quỹ đạo tròn hoàn hảo, button sát cạnh dưới lúc 0°
   const radius = props.element.height / 2 + PILL_GAP;
- 
+
   pillPos.value = {
-    x: cx + Math.sin(rad) * radius*1.5,
+    x: cx + Math.sin(rad) * radius * 1.5,
     y: cy + Math.cos(rad) * radius,
   };
 }
@@ -188,7 +205,8 @@ const style = computed(() => ({
   left: props.element.x + "px",
   top: props.element.y + "px",
   width: props.element.width + "px",
-  height: props.element.heightMode === 'auto' ? 'auto' : props.element.height + 'px',
+  height:
+    props.element.heightMode === "auto" ? "auto" : props.element.height + "px",
   border: isSelected.value ? "1px solid blue" : "none",
   cursor: isSelected.value ? "move" : "default",
   userSelect: "none",
@@ -199,7 +217,7 @@ const style = computed(() => ({
   whiteSpace: "pre-line",
   transformOrigin: "center center",
   transform: `rotate(${props.element.rotation || 0}deg)`,
-  lineHight: 1.2,
+  lineHeight: 1.2,
 }));
 
 const onMouseDown = (e: MouseEvent) => {
@@ -287,158 +305,246 @@ const stopDrag = () => {
 // =====================
 // RESIZE (proportional, horizontal only)
 // =====================
-let resizeDir = "br"
-const activeResizeHandle = ref<string | "tl" | "tr" | "bl" | "br" | "left" | "right" >(null)
+let resizeDir = "br";
+const activeResizeHandle = ref<
+  string | "tl" | "tr" | "bl" | "br" | "left" | "right"
+>(null);
 let isResizing = ref(false);
 
-let startWidth = 0
-let startHeight = 0
-let startLeft = 0
-let startTop = 0
+let startWidth = 0;
+let startHeight = 0;
+let startCenterX = 0;
+let startCenterY = 0;
+let startRotationRad = 0;
 
-let initialFontSize = 0
-let aspectRatio = 1
+let initialFontSize = 0;
+let startPointerLocal = { x: 0, y: 0 };
 let initialRect = {
   x: 0,
   y: 0,
   width: 0,
   height: 0,
   fontSize: 0,
-}
+};
+
+const MIN_WIDTH = 50;
+const MIN_HEIGHT = 20;
+
+type ResizeHandle = "tl" | "tr" | "bl" | "br" | "left" | "right";
+
+const HANDLE_BASE_ANGLE: Record<ResizeHandle, number> = {
+  right: 0,
+  left: 180,
+  tl: -135,
+  tr: -45,
+  bl: 135,
+  br: 45,
+};
+
+const normalize180 = (angle: number) => ((angle % 180) + 180) % 180;
+
+// Đổi góc handle hiện tại (đã cộng rotation) thành 1 trong 4 loại cursor chuẩn.
+// Ví dụ: handle nằm gần trục ngang => ew-resize, gần trục dọc => ns-resize.
+const getResizeCursor = (handle: ResizeHandle) => {
+  const rotation = props.element.rotation || 0;
+  const angle = normalize180(HANDLE_BASE_ANGLE[handle] + rotation);
+
+  if (angle < 22.5 || angle >= 157.5) return "ew-resize";
+  if (angle < 67.5) return "nwse-resize";
+  if (angle < 112.5) return "ns-resize";
+  return "nesw-resize";
+};
+
+const getHandleSigns = (dir: string): { sx: -1 | 0 | 1; sy: -1 | 0 | 1 } => {
+  const handle = dir as ResizeHandle;
+  switch (handle) {
+    case "tl":
+      return { sx: -1, sy: -1 };
+    case "tr":
+      return { sx: 1, sy: -1 };
+    case "bl":
+      return { sx: -1, sy: 1 };
+    case "br":
+      return { sx: 1, sy: 1 };
+    case "left":
+      return { sx: -1, sy: 0 };
+    case "right":
+      return { sx: 1, sy: 0 };
+    default:
+      return { sx: 1, sy: 1 };
+  }
+};
+
+// Chuyển toạ độ chuột từ hệ trục màn hình sang hệ trục local của element
+// (xoay ngược theo rotation). Nhờ vậy resize luôn đúng hướng sau khi rotate.
+const toLocal = (clientX: number, clientY: number) => {
+  const dx = clientX - startCenterX;
+  const dy = clientY - startCenterY;
+  const cos = Math.cos(startRotationRad);
+  const sin = Math.sin(startRotationRad);
+
+  return {
+    x: dx * cos + dy * sin,
+    y: -dx * sin + dy * cos,
+  };
+};
 
 const startResize = (e: MouseEvent, dir: string) => {
-  e.preventDefault()
+  e.preventDefault();
 
-  resizeDir = dir
-  isResizing.value = true
-  activeResizeHandle.value = dir
+  resizeDir = dir;
+  isResizing.value = true;
+  activeResizeHandle.value = dir;
 
-  startX = e.clientX
-  startY = e.clientY
+  startX = e.clientX;
+  startY = e.clientY;
 
-  startWidth = props.element.width
-  startLeft = props.element.x
-  startTop = props.element.y
+  startWidth = props.element.width;
+  initialFontSize = props.element.fontSize || 16;
 
-  initialFontSize = props.element.fontSize || 16
+  // Đọc height thực từ DOM vì text có thể đang heightMode = auto.
+  // Nếu lấy props.element.height trực tiếp thì có thể lệch với khung hiển thị.
+  const domEl = document.querySelector(
+    `[data-id="${props.element.id}"]`
+  ) as HTMLElement | null;
+  const actualHeight = domEl
+    ? domEl.clientHeight
+    : typeof props.element.height === "number"
+    ? props.element.height
+    : 40;
+  startHeight = actualHeight;
+  startCenterX = props.element.x + startWidth / 2;
+  startCenterY = props.element.y + startHeight / 2;
+  startRotationRad = ((props.element.rotation || 0) * Math.PI) / 180;
+  startPointerLocal = toLocal(e.clientX, e.clientY);
 
-    // Đọc height thực từ DOM — props.element.height có thể là 'auto'
-  const domEl = document.querySelector(`[data-id="${props.element.id}"]`) as HTMLElement | null
-  const actualHeight = domEl ? domEl.clientHeight : (typeof props.element.height === 'number' ? props.element.height : 40)
-  startHeight = actualHeight
-
-  aspectRatio = startWidth / startHeight
-
-  // 🔥 lưu state ban đầu
+  // Snapshot để tạo history (undo/redo) khi thả chuột.
   initialRect = {
     x: props.element.x,
     y: props.element.y,
     width: props.element.width,
     height: props.element.height,
     fontSize: props.element.fontSize || 16,
+  };
+
+  if (dir === "left" || dir === "right") {
+    store.setHeightMode(props.element.id, "auto");
+    store.resize(
+      props.element.id,
+      props.element.width,
+      actualHeight,
+      props.element.fontSize
+    );
   }
 
-  if (dir === 'left' || dir === 'right') {
-    store.setHeightMode(props.element.id, 'auto')
-    store.resize(props.element.id, props.element.width, actualHeight, props.element.fontSize)
-  }
+  document.body.style.userSelect = "none";
+  document.body.style.cursor = getResizeCursor(dir as ResizeHandle);
 
-  document.body.style.userSelect = "none"
-  document.body.style.cursor = dir === 'left' || dir === 'right' ? 'ew-resize' : 'nwse-resize'
-
-  window.addEventListener("mousemove", onResize)
-  window.addEventListener("mouseup", stopResize)
-}
+  window.addEventListener("mousemove", onResize);
+  window.addEventListener("mouseup", stopResize);
+};
 
 const onResize = (e: MouseEvent) => {
-  const dx = e.clientX - startX
-  const dy = e.clientY - startY
+  const { sx, sy } = getHandleSigns(resizeDir);
+  const pointer = toLocal(e.clientX, e.clientY);
+  // Resize dựa trên delta từ lúc mousedown để tránh hiện tượng nhảy kích thước ở frame đầu.
+  const deltaLocal = {
+    x: pointer.x - startPointerLocal.x,
+    y: pointer.y - startPointerLocal.y,
+  };
 
-  // ===== EDGE HANDLES: chỉ thay đổi width, height auto theo content =====
-  if (resizeDir === 'right' || resizeDir === 'left') {
-    let newWidth = resizeDir === 'right'
-      ? startWidth + dx
-      : startWidth - dx
- 
-    newWidth = Math.max(50, Math.round(newWidth))
- 
-    const newX = resizeDir === 'left'
-      ? startLeft + (startWidth - newWidth)
-      : startLeft
- 
-    store.move(props.element.id, newX, props.element.y)
-    // Truyền height = -1 để store biết không cập nhật height
-    store.resize(props.element.id, newWidth, undefined, props.element.fontSize ?? 16)
-    return
+  const hx0 = startWidth / 2;
+  const hy0 = startHeight / 2;
+  const anchorOld = {
+    x: sx === 0 ? 0 : -sx * hx0,
+    y: sy === 0 ? 0 : -sy * hy0,
+  };
+
+  let newWidth = startWidth;
+  let newHeight = startHeight;
+  let newFontSize = props.element.fontSize ?? 16;
+
+  // Corner handles: scale đồng đều theo đường chéo.
+  // Anchor cố định tại góc đối diện nên resize nhìn "neo" đúng một điểm.
+  if (sx !== 0 && sy !== 0) {
+    const diagonal = { x: 2 * sx * hx0, y: 2 * sy * hy0 };
+    const diagonalLength = Math.hypot(diagonal.x, diagonal.y) || 1;
+    const diagonalUnit = {
+      x: diagonal.x / diagonalLength,
+      y: diagonal.y / diagonalLength,
+    };
+    const projectedDelta =
+      deltaLocal.x * diagonalUnit.x + deltaLocal.y * diagonalUnit.y;
+    const projected = Math.max(
+      Math.max(MIN_WIDTH / startWidth, MIN_HEIGHT / startHeight),
+      1 + projectedDelta / diagonalLength
+    );
+
+    newWidth = Math.max(MIN_WIDTH, Math.round(startWidth * projected));
+    newHeight = Math.max(MIN_HEIGHT, Math.round(startHeight * projected));
+    newFontSize = Math.max(6, Math.round(initialFontSize * projected));
+  } else if (sx !== 0) {
+    // Edge trái/phải: chỉ scale theo trục X local, giữ cạnh đối diện làm anchor.
+    const span = Math.max(MIN_WIDTH, startWidth + sx * deltaLocal.x);
+    newWidth = Math.round(span);
+    newHeight = startHeight;
+    newFontSize = props.element.fontSize ?? 16;
   }
 
-  let newWidth = startWidth
-  let newHeight = startHeight
-  let newX = startLeft
-  let newY = startTop
+  const hx = newWidth / 2;
+  const hy = newHeight / 2;
+  const anchorNew = {
+    x: sx === 0 ? 0 : -sx * hx,
+    y: sy === 0 ? 0 : -sy * hy,
+  };
 
-  // ===== HORIZONTAL =====
-  if (resizeDir.includes("r")) {
-    newWidth = startWidth + dx
-  }
-  if (resizeDir.includes("l")) {
-    newWidth = startWidth - dx
-    newX = startLeft + dx
-  }
+  const cos = Math.cos(startRotationRad);
+  const sin = Math.sin(startRotationRad);
+  const anchorWorldX = startCenterX + anchorOld.x * cos - anchorOld.y * sin;
+  const anchorWorldY = startCenterY + anchorOld.x * sin + anchorOld.y * cos;
 
-  // ===== VERTICAL =====
-  if (resizeDir.includes("b")) {
-    newHeight = startHeight + dy
-  }
-  if (resizeDir.includes("t")) {
-    newHeight = startHeight - dy
-    newY = startTop + dy
-  }
+  // Tính tâm mới sao cho anchor cũ và anchor mới trùng nhau trong world space.
+  const newCenterX = anchorWorldX - (anchorNew.x * cos - anchorNew.y * sin);
+  const newCenterY = anchorWorldY - (anchorNew.x * sin + anchorNew.y * cos);
 
-  // ===== LOCK ASPECT RATIO =====
-  const scale = Math.max(0.1, newWidth / startWidth)
-  newWidth = Math.max(50, Math.round(startWidth * scale))
-  newHeight = Math.max(20, Math.round(newWidth / aspectRatio))
+  const newX = newCenterX - newWidth / 2;
+  const newY = newCenterY - newHeight / 2;
 
-  // adjust lại X/Y nếu resize từ top/left
-  if (resizeDir.includes("l")) {
-    newX = startLeft + (startWidth - newWidth)
-  }
-  if (resizeDir.includes("t")) {
-    newY = startTop + (startHeight - newHeight)
+  store.move(props.element.id, newX, newY);
+
+  if (resizeDir === "left" || resizeDir === "right") {
+    store.resize(props.element.id, newWidth, undefined, newFontSize);
+    return;
   }
 
-  const newFontSize = Math.max(6, Math.round(initialFontSize * scale))
-
-  store.move(props.element.id, newX, newY)
-  store.resize(props.element.id, newWidth, newHeight, newFontSize)
-}
+  store.resize(props.element.id, newWidth, newHeight, newFontSize);
+};
 
 const stopResize = () => {
-  document.body.style.userSelect = ""
-  document.body.style.cursor = ""
+  document.body.style.userSelect = "";
+  document.body.style.cursor = "";
 
-  const el = store.findElementById(props.element.id)
-  if (!el) return
+  const el = store.findElementById(props.element.id);
+  if (!el) return;
 
   // Edge handles: lấy height thực từ DOM (do height: auto)
-  const isEdge = resizeDir === 'left' || resizeDir === 'right'
+  const isEdge = resizeDir === "left" || resizeDir === "right";
 
   if (isEdge) {
-    const domEl = elRef.value
-    const actualHeight = domEl?.clientHeight ?? el.height
+    const domEl = elRef.value;
+    const actualHeight = domEl?.clientHeight ?? el.height;
 
-    store.resize(props.element.id, el.width, actualHeight, el.fontSize ?? 16)
+    store.resize(props.element.id, el.width, actualHeight, el.fontSize ?? 16);
   }
 
   const hasChanged =
     el.x !== initialRect.x ||
     el.y !== initialRect.y ||
     el.width !== initialRect.width ||
-    el.height !== initialRect.height
+    el.height !== initialRect.height;
 
   if (hasChanged) {
-    store.setHeightMode(props.element.id, 'fixed')
+    store.setHeightMode(props.element.id, "fixed");
     store.executeCommand(
       createResizeCommand(store, {
         id: props.element.id,
@@ -455,15 +561,15 @@ const stopResize = () => {
         newHeight: el.height,
         newFontSize: el.fontSize || 16,
       })
-    )
+    );
   }
 
-  isResizing.value = false
-  activeResizeHandle.value = null
+  isResizing.value = false;
+  activeResizeHandle.value = null;
 
-  window.removeEventListener("mousemove", onResize)
-  window.removeEventListener("mouseup", stopResize)
-}
+  window.removeEventListener("mousemove", onResize);
+  window.removeEventListener("mouseup", stopResize);
+};
 
 // =====================
 // ROTATE
@@ -474,7 +580,7 @@ let rotateCenterY = 0;
 let rotateStartAngle = 0;
 
 let rotateInitial = 0;
-let lastRotation = 0
+let lastRotation = 0;
 
 const isRotating = ref(false);
 const tooltipX = ref(0);
@@ -497,7 +603,7 @@ const startRotate = (e: MouseEvent) => {
   }
 
   rotateInitial = props.element.rotation || 0;
-  lastRotation = rotateInitial
+  lastRotation = rotateInitial;
 
   rotateStartAngle =
     Math.atan2(e.clientY - rotateCenterY, e.clientX - rotateCenterX) *
@@ -517,8 +623,8 @@ const onRotate = (e: MouseEvent) => {
     Math.atan2(e.clientY - rotateCenterY, e.clientX - rotateCenterX) *
     (180 / Math.PI);
 
-  const newRotation = rotateInitial + (angle - rotateStartAngle)
-  lastRotation = newRotation
+  const newRotation = rotateInitial + (angle - rotateStartAngle);
+  lastRotation = newRotation;
 
   store.rotate(props.element.id, newRotation);
 
@@ -535,9 +641,9 @@ const stopRotate = () => {
     const command = createRotateCommand(store, {
       id: props.element.id,
       oldRotation: rotateInitial,
-      newRotation: lastRotation
-    })
-    store.executeCommand(command)
+      newRotation: lastRotation,
+    });
+    store.executeCommand(command);
   }
 
   window.removeEventListener("mousemove", onRotate);
@@ -595,21 +701,21 @@ const stopRotate = () => {
 }
 
 .resize-handle.right {
-    width: 8px;
-    height: 18px;
-    background: blue;
-    position: absolute;
-    z-index: 3;
-    cursor: ew-resize;
-    right: -5px;
-    top: 50%;
-    transform: translateY(-50%);
-    border-radius: 4px;
-    &.is-active,
-    &:hover {
-      background: #3b82f6;
-    }
+  width: 8px;
+  height: 18px;
+  background: blue;
+  position: absolute;
+  z-index: 3;
+  cursor: ew-resize;
+  right: -5px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-radius: 4px;
+  &.is-active,
+  &:hover {
+    background: #3b82f6;
   }
+}
 </style>
 
 <!-- Global — scoped hash không reach được DOM teleported ra body -->
