@@ -16,6 +16,7 @@ export interface Size {
 export interface BaseElement extends Position, Size {
   id: ID
   zIndex: number
+  rotation?: number
 }
 
 export interface TextElement extends BaseElement {
@@ -25,7 +26,6 @@ export interface TextElement extends BaseElement {
   color?: string
   alignment?: Alignment,
   heightMode?: HeightMode,
-  rotation?: number
 }
 
 export interface ImageElement extends BaseElement {

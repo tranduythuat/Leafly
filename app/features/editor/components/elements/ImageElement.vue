@@ -1,6 +1,10 @@
 <template>
   <div :style="style" @click.stop @mousedown.stop="onMouseDown">
-    <ElementToolbar v-if="isSelected && store.selectedIds.length === 1" :element="element" />
+    <ElementToolbar
+      v-if="isSelected && store.selectedIds.length === 1"
+      :element="element"
+      :isSelected="isSelected"
+    />
     <img 
       :src="element.src" 
       :style="{

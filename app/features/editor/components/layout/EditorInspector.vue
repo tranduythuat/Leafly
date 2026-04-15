@@ -55,7 +55,7 @@ const activeSection = computed(() => store.activeSection);
 
 <style scoped lang="scss">
 .editor-inspector {
-  width: 320px;
+  width: 450px;
   padding: 1rem 1.1rem;
   border-left: 1px solid #ebe5da;
   background:
