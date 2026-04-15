@@ -11,6 +11,8 @@ import type {
 } from '../types'
 import { sectionPresets } from "../data/sectionPresets"
 import { createInsertTextCommand } from "../core/commands/inserttextblock"
+import { createDuplicateElementCommand } from "../core/commands/duplicateElement"
+import { createUpdateSectionStyleCommand } from "../core/commands/updateSectionStyle"
 
 let history = createHistory() 
 
@@ -43,6 +45,9 @@ const cloneSection = (section: Section): Section =>
 
 const cloneElement = (element: EditorElement): EditorElement =>
   JSON.parse(JSON.stringify(element))
+
+const cloneSectionStyle = (style: SectionStyle): SectionStyle =>
+  JSON.parse(JSON.stringify(style))
 
 const initialSectionId = createSectionId()
 
@@ -361,17 +366,22 @@ export const useEditorStore = defineStore("editor", {
       clone.x += 24
       clone.y += 24
       clone.zIndex += 1
-
-      section.elements.push(clone)
-      this.ui.selectedIds = [clone.id]
-      this.ui.activeSectionId = section.id
+      
+      const command = createDuplicateElementCommand(this, {
+        sectionId: section.id,
+        element: clone,
+        prevSelectedIds: [...this.ui.selectedIds],
+        prevActiveSectionId: this.ui.activeSectionId,
+      })
+      this.executeCommand(command)
     },
 
     updateSectionStyle(id: string, patch: SectionStylePatch) {
       const section = this.findSectionById(id)
       if (!section) return
 
-      section.style = {
+      const oldStyle = cloneSectionStyle(section.style)
+      const newStyle: SectionStyle = {
         ...section.style,
         ...patch,
         background: patch.background
@@ -381,6 +391,15 @@ export const useEditorStore = defineStore("editor", {
             }
           : section.style.background,
       }
+
+      if (JSON.stringify(oldStyle) === JSON.stringify(newStyle)) return
+
+      const command = createUpdateSectionStyleCommand(this, {
+        sectionId: id,
+        oldStyle,
+        newStyle,
+      })
+      this.executeCommand(command)
     },
 
     setHeightMode(id: string, mode: 'auto' | 'fixed') { 

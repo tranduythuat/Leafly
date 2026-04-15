@@ -3,6 +3,7 @@
     <ElementToolbar
       v-if="isSelected && store.selectedIds.length === 1"
       :element="element"
+      :isSelected="isSelected"
     />
     {{ element.content }}
 
@@ -56,7 +57,7 @@
     </div>
     <div
       class="te-handles-pill"
-      v-if="isSelected && store.selectedIds.length === 1 && !isRotating"
+      v-if="isSelected && store.selectedIds.length === 1 && !isRotating && !isResizing"
       :style="pillStyle"
       @click.stop
       @mousedown.stop
@@ -195,10 +196,10 @@ const style = computed(() => ({
   fontSize: (props.element.fontSize || 16) + "px",
   textAlign: props.element.alignment || "left",
   zIndex: 2,
-  whiteSpace: "pre-wrap",
+  whiteSpace: "pre-line",
   transformOrigin: "center center",
   transform: `rotate(${props.element.rotation || 0}deg)`,
-  lineHeight: 1,
+  lineHight: 1.2,
 }));
 
 const onMouseDown = (e: MouseEvent) => {
@@ -615,7 +616,7 @@ const stopRotate = () => {
 <style lang="scss">
 .te-rotation-tooltip {
   position: fixed;
-  background: rgba(30, 30, 30, 0.88);
+  background: rgb(30, 30, 30);
   color: #fff;
   font-size: 12px;
   font-weight: 600;
@@ -639,12 +640,13 @@ const stopRotate = () => {
 }
 
 .te-handle {
-  width: 30px;
-  height: 30px;
+  width: 25px;
+  height: 25px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
+  background-color: #bbc1b5;
   color: #4f5c43;
   cursor: grab;
   transition: background 0.15s;

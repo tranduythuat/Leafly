@@ -1,5 +1,5 @@
 <template>
-  <div class="flex h-full">
+  <div class="flex h-full w-md">
     <!-- LEFT ICON BAR -->
     <div class="w-16 border-r flex flex-col py-4 gap-4">
       <button
@@ -35,3 +35,9 @@ const tabs = [
   { key: "music", label: "Âm nhạc", icon: Music }
 ]
 </script>
+
+<style lang="scss" scoped>
+  .h-full {
+    width: 430px;
+  }
+</style>
