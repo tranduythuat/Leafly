@@ -2,7 +2,8 @@
   <div
     ref="elRef"
     :data-id="element.id"
-    :style="style"
+    class="el-position"
+    :style="positionStyle"
     @click.stop
     @mousedown.stop="onMouseDown"
   >
@@ -11,50 +12,59 @@
       :element="element"
       :isSelected="isSelected"
     />
-    {{ element.content }}
 
-    <div
-      v-if="isSelected && (!isResizing || activeResizeHandle === 'tl')"
-      class="resize-handle tl"
-      :style="{ cursor: getResizeCursor('tl') }"
-      @click.stop
-      @mousedown.stop="startResize($event, 'tl')"
-    />
-    <div
-      v-if="isSelected && (!isResizing || activeResizeHandle === 'tr')"
-      class="resize-handle tr"
-      :style="{ cursor: getResizeCursor('tr') }"
-      @click.stop
-      @mousedown.stop="startResize($event, 'tr')"
-    />
-    <div
-      v-if="isSelected && (!isResizing || activeResizeHandle === 'bl')"
-      class="resize-handle bl"
-      :style="{ cursor: getResizeCursor('bl') }"
-      @click.stop
-      @mousedown.stop="startResize($event, 'bl')"
-    />
-    <div
-      v-if="isSelected && (!isResizing || activeResizeHandle === 'br')"
-      class="resize-handle br"
-      :style="{ cursor: getResizeCursor('br') }"
-      @click.stop
-      @mousedown.stop="startResize($event, 'br')"
-    />
-    <div
-      v-if="isSelected && (!isResizing || activeResizeHandle === 'left')"
-      class="resize-handle left"
-      :style="{ cursor: getResizeCursor('left') }"
-      @click.stop
-      @mousedown.stop="startResize($event, 'left')"
-    />
-    <div
-      v-if="isSelected && (!isResizing || activeResizeHandle === 'right')"
-      class="resize-handle right"
-      :style="{ cursor: getResizeCursor('right') }"
-      @click.stop
-      @mousedown.stop="startResize($event, 'right')"
-    />
+    <div class="el-transform" :style="transformStyle">
+      <div class="el-box" :style="boxStyle">
+        <div class="el-content" :style="contentStyle">
+          {{ element.content }}
+        </div>
+      </div>
+    </div>
+
+    <div class="el-overlay" :style="transformStyle">
+      <div
+        v-if="isSelected && (!isResizing || activeResizeHandle === 'tl')"
+        class="resize-handle tl"
+        :style="{ cursor: getResizeCursor('tl') }"
+        @click.stop
+        @mousedown.stop="startResize($event, 'tl')"
+      />
+      <div
+        v-if="isSelected && (!isResizing || activeResizeHandle === 'tr')"
+        class="resize-handle tr"
+        :style="{ cursor: getResizeCursor('tr') }"
+        @click.stop
+        @mousedown.stop="startResize($event, 'tr')"
+      />
+      <div
+        v-if="isSelected && (!isResizing || activeResizeHandle === 'bl')"
+        class="resize-handle bl"
+        :style="{ cursor: getResizeCursor('bl') }"
+        @click.stop
+        @mousedown.stop="startResize($event, 'bl')"
+      />
+      <div
+        v-if="isSelected && (!isResizing || activeResizeHandle === 'br')"
+        class="resize-handle br"
+        :style="{ cursor: getResizeCursor('br') }"
+        @click.stop
+        @mousedown.stop="startResize($event, 'br')"
+      />
+      <div
+        v-if="isSelected && (!isResizing || activeResizeHandle === 'left')"
+        class="resize-handle left"
+        :style="{ cursor: getResizeCursor('left') }"
+        @click.stop
+        @mousedown.stop="startResize($event, 'left')"
+      />
+      <div
+        v-if="isSelected && (!isResizing || activeResizeHandle === 'right')"
+        class="resize-handle right"
+        :style="{ cursor: getResizeCursor('right') }"
+        @click.stop
+        @mousedown.stop="startResize($event, 'right')"
+      />
+    </div>
   </div>
 
   <!-- Pill buttons: luôn đứng thẳng, gắn dưới element thực -->
@@ -200,23 +210,34 @@ const pillStyle = computed(() => ({
 // ELEMENT STYLE
 // =====================
 
-const style = computed(() => ({
+const positionStyle = computed(() => ({
   position: "absolute",
   left: props.element.x + "px",
   top: props.element.y + "px",
   width: props.element.width + "px",
   height:
     props.element.heightMode === "auto" ? "auto" : props.element.height + "px",
-  border: isSelected.value ? "1px solid blue" : "none",
   cursor: isSelected.value ? "move" : "default",
   userSelect: "none",
+  zIndex: 2,
+}));
+
+const transformStyle = computed(() => ({
+  transformOrigin: "center center",
+  transform: `rotate(${props.element.rotation || 0}deg)`,
+}));
+
+const boxStyle = computed(() => ({
+  width: "100%",
+  height: props.element.heightMode === "auto" ? "auto" : "100%",
+  border: isSelected.value ? "1px solid blue" : "none",
+}));
+
+const contentStyle = computed(() => ({
   color: props.element.color,
   fontSize: (props.element.fontSize || 16) + "px",
   textAlign: props.element.alignment || "left",
-  zIndex: 2,
   whiteSpace: "pre-line",
-  transformOrigin: "center center",
-  transform: `rotate(${props.element.rotation || 0}deg)`,
   lineHeight: 1.2,
 }));
 
@@ -652,6 +673,29 @@ const stopRotate = () => {
 </script>
 
 <style scoped lang="scss">
+.el-position {
+  position: absolute;
+}
+
+.el-transform {
+  transform-origin: center center;
+}
+
+.el-box {
+  box-sizing: border-box;
+}
+
+.el-content {
+  width: 100%;
+}
+
+.el-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transform-origin: center center;
+}
+
 .resize-handle {
   width: 12px;
   height: 12px;
@@ -659,28 +703,25 @@ const stopRotate = () => {
   position: absolute;
   z-index: 3;
   border-radius: 50%;
+  pointer-events: auto;
 }
 .resize-handle.tl {
   left: -6px;
   top: -6px;
-  cursor: nwse-resize;
 }
 .resize-handle.tr {
   right: -6px;
   top: -6px;
-  cursor: nesw-resize;
 }
 
 .resize-handle.bl {
   left: -6px;
   bottom: -6px;
-  cursor: nesw-resize;
 }
 
 .resize-handle.br {
   right: -6px;
   bottom: -6px;
-  cursor: nwse-resize;
 }
 
 .resize-handle.left {
@@ -689,7 +730,6 @@ const stopRotate = () => {
   background: blue;
   position: absolute;
   z-index: 3;
-  cursor: ew-resize;
   left: -5px;
   top: 50%;
   transform: translateY(-50%);
@@ -706,7 +746,6 @@ const stopRotate = () => {
   background: blue;
   position: absolute;
   z-index: 3;
-  cursor: ew-resize;
   right: -5px;
   top: 50%;
   transform: translateY(-50%);

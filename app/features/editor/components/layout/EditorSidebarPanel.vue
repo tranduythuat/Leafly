@@ -1,12 +1,18 @@
 <template>
   <div class="flex-1 p-4 overflow-y-auto">
     <div class="grid grid-cols-2 gap-4">
-      <SidebarItem v-for="item in items" :key="item.id" :item="item" />
+      <SidebarItem
+        v-for="item in items"
+        :key="item.id"
+        :item="item"
+        :type="type"
+      />
     </div>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import { computed } from "vue";
 import SidebarItem from "./EditorSidebarItem.vue";
 
 const props = defineProps({
@@ -20,8 +26,9 @@ const itemsMap = {
     { id: "quote", label: "Quote" },
   ],
   image: [
-    { id: "gallery", label: "Album ảnh" },
-    { id: "hero", label: "Hero image" },
+    { id: "img-1", label: "Photo 1", src: "/img/1.jpg" },
+    { id: "img-2", label: "Photo 2", src: "/img/2.jpg" },
+    { id: "img-upload", label: "Upload", upload: true },
   ],
 };
 
