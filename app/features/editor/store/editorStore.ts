@@ -11,8 +11,10 @@ import type {
 } from '../types'
 import { sectionPresets } from "../data/sectionPresets"
 import { createInsertTextCommand } from "../core/commands/inserttextblock"
+import { createInsertImageCommand } from "../core/commands/insertImageBlock"
 import { createDuplicateElementCommand } from "../core/commands/duplicateElement"
 import { createUpdateSectionStyleCommand } from "../core/commands/updateSectionStyle"
+import { createUpdateStyleCommand } from "../core/commands/updateStyle"
 
 let history = createHistory() 
 
@@ -301,8 +303,40 @@ export const useEditorStore = defineStore("editor", {
       this.executeCommand(command)
     },
 
-    insertImageBlock() {
-      this.addImage("/img/1.jpg")
+    insertImageBlock(
+      src = "/img/1.jpg",
+      sectionDOMWidth?: number,
+      sectionDOMHeight?: number,
+    ) {
+      const section = this.activeSection
+      if (!section) return
+
+      const imageWidth = 260
+      const imageHeight = 180
+      const sectionWidth  = sectionDOMWidth  ?? 800
+      const sectionHeight = sectionDOMHeight ?? (section.style?.minHeight ?? 320)
+
+      const image: EditorElement = {
+        id: createElementId(),
+        type: "image",
+        x: Math.round((sectionWidth - imageWidth) / 2),
+        y: Math.round((sectionHeight - imageHeight) / 2),
+        width: imageWidth,
+        height: imageHeight,
+        zIndex: getNextZIndex(section),
+        rotation: 0,
+        src,
+        style: {
+          objectFit: "cover",
+        }
+      }
+
+      const command = createInsertImageCommand(this, {
+        sectionId: section.id,
+        element: image,
+      })
+
+      this.executeCommand(command)
     },
 
     select(id: string, isMulti = false) {
@@ -338,6 +372,20 @@ export const useEditorStore = defineStore("editor", {
       const el = this.findElementById(id)
       if (!el || el.type !== "text") return;
       el.content = content;
+    },
+
+    updateImageSource(id: string, src: string) {
+      const el = this.findElementById(id)
+      if (!el || el.type !== "image") return
+      if (el.src === src) return
+
+      const command = createUpdateStyleCommand(this, {
+        id,
+        oldData: { src: el.src },
+        newData: { src },
+      })
+
+      this.executeCommand(command)
     },
 
     resize(id: string, width?: number, height?: number, fontSize?: number) {
@@ -425,25 +473,7 @@ export const useEditorStore = defineStore("editor", {
     },
 
     addImage(src: string) {
-      const section = this.activeSection
-      if (!section) return
-
-      const image: EditorElement = {
-        id: createElementId(),
-        type: "image",
-        x: 100,
-        y: 100,
-        width: 200,
-        height: 150,
-        zIndex: getNextZIndex(section),
-        src,
-        style: {
-          objectFit: "cover",
-        }
-      }
-
-      section.elements.push(image)
-      this.ui.selectedIds = [image.id]
+      this.insertImageBlock(src)
     },
     setBackground(type: 'color' | 'image', value: string) {
       this.document.background = { type, value }

@@ -1,6 +1,27 @@
 <template>
   <div v-if="element" class="inspector-form">
     <div class="inspector-form__section">
+      <div class="inspector-form__section-title">Image Source</div>
+
+      <div class="field">
+        <label>URL</label>
+        <input
+          type="text"
+          v-model="local.src"
+          placeholder="https://... hoặc /img/1.jpg"
+          @blur="applySource"
+        />
+      </div>
+
+      <div class="field field--actions">
+        <label class="ghost-btn ghost-btn--file">
+          Upload image
+          <input type="file" accept="image/*" @change="onUploadImage" />
+        </label>
+      </div>
+    </div>
+
+    <div class="inspector-form__section">
       <div class="inspector-form__section-title">Image Size</div>
 
       <div class="field field--row">
@@ -60,6 +81,7 @@ const store = useEditorStore();
 
 // 👉 local state
 const local = reactive({
+  src: "",
   width: 0,
   height: 0,
 });
@@ -75,6 +97,7 @@ watch(
 
     return {
       id: el.id,
+      src: el.src,
       width: el.width,
       height: el.height,
     }
@@ -84,6 +107,7 @@ watch(
 
     isSyncing = true;
 
+    local.src = snapshot.src;
     local.width = snapshot.width;
     local.height = snapshot.height;
 
@@ -115,6 +139,29 @@ const apply = () => {
 
 // 👉 debounce để UX mượt
 const debouncedApply = debounce(apply, 300);
+
+const applySource = () => {
+  const el = props.element
+  if (!el) return
+
+  const nextSrc = local.src.trim()
+  if (!nextSrc || nextSrc === el.src) {
+    local.src = el.src
+    return
+  }
+
+  store.updateImageSource(el.id, nextSrc)
+}
+
+const onUploadImage = (e: Event) => {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file || !props.element) return
+
+  const src = URL.createObjectURL(file)
+  store.updateImageSource(props.element.id, src)
+  input.value = ""
+}
 
 // 👉 local → store
 watch(
@@ -190,5 +237,15 @@ input {
   background: #fff;
   color: #4d5942;
   padding: 0.8rem 0.9rem;
+}
+
+.ghost-btn--file {
+  display: inline-block;
+  text-align: center;
+  cursor: pointer;
+
+  input {
+    display: none;
+  }
 }
 </style>
