@@ -7,6 +7,9 @@ export default defineNuxtConfig({
     // '@/assets/css/tailwind.css',
     '@/assets/scss/main.scss',
   ],
+  tailwindcss: {
+    configPath: '~/../../tailwind.config.ts',
+  },
   experimental: {
     payloadExtraction: false
   },

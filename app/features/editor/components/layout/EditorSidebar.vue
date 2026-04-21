@@ -1,22 +1,43 @@
 <template>
-  <div class="sidebar">
-    <div>Sidebar</div>
-    <!-- <button @click="addText">Add Text</button> -->
+  <div class="flex h-full w-md">
+    <!-- LEFT ICON BAR -->
+    <div class="w-16 border-r flex flex-col py-4 gap-4">
+      <button
+        v-for="item in tabs"
+        :key="item.key"
+        @click="active = item.key"
+        class="flex flex-col border-black"
+      >
+        <component :is="item.icon" class="w-5 h-5" />
+        {{ item.label }}
+      </button>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <EditorSidebarPanel :type="active" />
   </div>
 </template>
 
 <script setup>
-// import { useEditorStore } from "../../store/editorStore";
+import { ref } from "vue"
+import EditorSidebarPanel from "./EditorSidebarPanel.vue"
+import { Type, Image, Music } from '@lucide/vue';
 
-// const store = useEditorStore();
+const active = ref("text")
 
-// const addText = () => {
-//   store.elements.push({
-//     id: Date.now().toString(),
-//     type: "text",
-//     x: 50,
-//     y: 50,
-//     content: "New Text",
-//   });
-// };
+const tabs = [
+  { 
+    key: "text", 
+    label: "Văn bản", 
+    icon: Type
+  },
+  { key: "image", label: "Hình ảnh", icon: Image },
+  { key: "music", label: "Âm nhạc", icon: Music }
+]
 </script>
+
+<style lang="scss" scoped>
+  .h-full {
+    width: 430px;
+  }
+</style>

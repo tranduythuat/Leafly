@@ -1,15 +1,14 @@
-import type { Command } from "../types/command";
+import type { Command } from "../types";
 
 export function createHistory() {
-  const undoStack: any[] = [];
-  const redoStack: any[] = [];
+  const undoStack: Command[] = [];
+  const redoStack: Command[] = [];
 
   return {
     execute(command: Command) {
       console.log('🟢 EXECUTE COMMAND', command)
 
       command.execute();
-
       undoStack.push(command);
       redoStack.length = 0;
 
@@ -28,10 +27,6 @@ export function createHistory() {
 
       cmd.undo();
       redoStack.push(cmd);
-
-      console.log('redoStack[0]', redoStack[0])
-
-
 
       console.log('📦 undoStack size:', undoStack.length)
       console.log('📦 redoStack size:', redoStack.length)
