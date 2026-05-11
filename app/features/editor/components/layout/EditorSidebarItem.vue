@@ -1,9 +1,8 @@
 <template>
   <div
-    class="border rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:shadow"
+    class="border rounded-xl p-2 font-bold flex flex-col items-center justify-center cursor-pointer hover:shadow"
     @click="onClickItem"
   >
-    <div class="w-10 h-10 bg-gray-100 rounded mb-2" />
     <span class="text-sm text-center">{{ item.label }}</span>
     <input
       v-if="type === 'image'"
@@ -27,7 +26,7 @@ interface SidebarItem {
   upload?: boolean
 }
 
-const props = defineProps<{
+const props = defineProps<{ 
   item: SidebarItem
   type: string
 }>()

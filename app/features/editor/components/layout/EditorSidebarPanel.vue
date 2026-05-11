@@ -1,5 +1,5 @@
 <template>
-  <div class="flex-1 p-4 overflow-y-auto">
+  <div class="flex-1 p-3 overflow-y-auto">
     <div class="grid grid-cols-2 gap-4">
       <SidebarItem
         v-for="item in items"

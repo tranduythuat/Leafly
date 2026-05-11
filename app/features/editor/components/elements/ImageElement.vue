@@ -107,10 +107,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted, watch } from "vue";
+import { computed, ref, onMounted, onUnmounted, watch, inject } from "vue";
 import { useEditorStore } from "../../store/editorStore";
 import { createResizeCommand } from "../../core/commands/resizeImage";
 import { createRotateCommand } from "../../core/commands/rotateElement";
+import { calcSnapWithContainer } from '../../core/snapEngine'
+import { calcSnap, ContainerRect } from '../../core/snapEngine'
+import type { SnapLine } from '../../core/snapEngine'
 import type { ImageElement as ImageElementType } from "../../types";
 import ElementToolbar from "./ElementToolbar.vue";
 
@@ -122,6 +125,8 @@ const store = useEditorStore();
 
 const isSelected = computed(() => store.selectedIds.includes(props.element.id));
 const elRef = ref<HTMLElement | null>(null);
+const setSnapLines = inject<(lines: SnapLine[]) => void>('setSnapLines');
+const getContainerRect = inject<() => ContainerRect>('getContainerRect')
 const isResizing = ref(false);
 const activeResizeHandle = ref<"tl" | "tr" | "bl" | "br" | null>(null);
 
@@ -167,10 +172,30 @@ const startDrag = (e: MouseEvent) => {
 const onDrag = (e: MouseEvent) => {
   const dx = e.clientX - startX;
   const dy = e.clientY - startY;
-  store.move(props.element.id, initialX + dx, initialY + dy);
+  const rawX = initialX + dx
+  const rawY = initialY + dy
+
+  const others = store.activeSectionElements
+    .filter(el => el.id !== props.element.id)
+    .map(el => ({ x: el.x, y: el.y, width: el.width, height: el.height }))
+
+  const container = getContainerRect?.() ?? {
+    x: 0, y: 0, width: 800, height: 600, paddingX: 48, paddingY: 48
+  }
+
+  const result = calcSnapWithContainer(
+    { x: rawX, y: rawY, width: props.element.width, height: props.element.height },
+    others,
+    container
+  )
+
+  store.move(props.element.id, result.x, result.y)
+  // store.move(props.element.id, initialX + dx, initialY + dy);
+  setSnapLines?.(result.lines)
 };
 
 const stopDrag = () => {
+  setSnapLines?.([])
   document.body.style.userSelect = "";
   window.removeEventListener("mousemove", onDrag);
   window.removeEventListener("mouseup", stopDrag);

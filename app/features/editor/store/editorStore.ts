@@ -159,12 +159,6 @@ export const useEditorStore = defineStore("editor", {
       return null; // Return null if no element is found
     },
 
-    // findElementById(id: string) {
-    //   return this.findSectionByElementId(id)?.elements.find(
-    //     (element) => element.id === id
-    //   )
-    // },
-
     replaceSections(sections: Section[]) {
       this.document.sections = sections
     },
