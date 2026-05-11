@@ -49,12 +49,17 @@ const toolbarRef = ref<HTMLElement | null>(null)
 const updatePosition = () => {
   if (!isVisible.value) return
 
-  const domEl = document.querySelector(`[data-id="${props.element.id}"]`) as HTMLElement | null
+  const rootEl = document.querySelector(`[data-id="${props.element.id}"]`) as HTMLElement | null
   const toolbarEl = toolbarRef.value
 
-  if (!domEl || !toolbarEl) return
+  if (!rootEl || !toolbarEl) return
 
-  const rect = domEl.getBoundingClientRect()
+  // Text element rotate ở `.el-transform`, nên cần đo từ node đã transform
+  // để toolbar bám theo hình học thực tế khi xoay.
+  const transformedEl = rootEl.querySelector('.el-transform') as HTMLElement | null
+  const measuredEl = transformedEl ?? rootEl
+
+  const rect = measuredEl.getBoundingClientRect()
   const toolbarRect = toolbarEl.getBoundingClientRect()
 
   const margin = 8

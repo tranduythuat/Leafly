@@ -19,51 +19,51 @@
           {{ element.content }}
         </div>
       </div>
-    </div>
 
-    <div class="el-overlay" :style="transformStyle">
-      <div
-        v-if="isSelected && (!isResizing || activeResizeHandle === 'tl')"
-        class="resize-handle tl"
-        :style="{ cursor: getResizeCursor('tl') }"
-        @click.stop
-        @mousedown.stop="startResize($event, 'tl')"
-      />
-      <div
-        v-if="isSelected && (!isResizing || activeResizeHandle === 'tr')"
-        class="resize-handle tr"
-        :style="{ cursor: getResizeCursor('tr') }"
-        @click.stop
-        @mousedown.stop="startResize($event, 'tr')"
-      />
-      <div
-        v-if="isSelected && (!isResizing || activeResizeHandle === 'bl')"
-        class="resize-handle bl"
-        :style="{ cursor: getResizeCursor('bl') }"
-        @click.stop
-        @mousedown.stop="startResize($event, 'bl')"
-      />
-      <div
-        v-if="isSelected && (!isResizing || activeResizeHandle === 'br')"
-        class="resize-handle br"
-        :style="{ cursor: getResizeCursor('br') }"
-        @click.stop
-        @mousedown.stop="startResize($event, 'br')"
-      />
-      <div
-        v-if="isSelected && (!isResizing || activeResizeHandle === 'left')"
-        class="resize-handle left"
-        :style="{ cursor: getResizeCursor('left') }"
-        @click.stop
-        @mousedown.stop="startResize($event, 'left')"
-      />
-      <div
-        v-if="isSelected && (!isResizing || activeResizeHandle === 'right')"
-        class="resize-handle right"
-        :style="{ cursor: getResizeCursor('right') }"
-        @click.stop
-        @mousedown.stop="startResize($event, 'right')"
-      />
+      <div class="el-overlay">
+        <div
+          v-if="isSelected && (!isResizing || activeResizeHandle === 'tl')"
+          class="resize-handle tl"
+          :style="{ cursor: getResizeCursor('tl') }"
+          @click.stop
+          @mousedown.stop="startResize($event, 'tl')"
+        />
+        <div
+          v-if="isSelected && (!isResizing || activeResizeHandle === 'tr')"
+          class="resize-handle tr"
+          :style="{ cursor: getResizeCursor('tr') }"
+          @click.stop
+          @mousedown.stop="startResize($event, 'tr')"
+        />
+        <div
+          v-if="isSelected && (!isResizing || activeResizeHandle === 'bl')"
+          class="resize-handle bl"
+          :style="{ cursor: getResizeCursor('bl') }"
+          @click.stop
+          @mousedown.stop="startResize($event, 'bl')"
+        />
+        <div
+          v-if="isSelected && (!isResizing || activeResizeHandle === 'br')"
+          class="resize-handle br"
+          :style="{ cursor: getResizeCursor('br') }"
+          @click.stop
+          @mousedown.stop="startResize($event, 'br')"
+        />
+        <div
+          v-if="isSelected && (!isResizing || activeResizeHandle === 'left')"
+          class="resize-handle left"
+          :style="{ cursor: getResizeCursor('left') }"
+          @click.stop
+          @mousedown.stop="startResize($event, 'left')"
+        />
+        <div
+          v-if="isSelected && (!isResizing || activeResizeHandle === 'right')"
+          class="resize-handle right"
+          :style="{ cursor: getResizeCursor('right') }"
+          @click.stop
+          @mousedown.stop="startResize($event, 'right')"
+        />
+      </div>
     </div>
   </div>
 
@@ -132,7 +132,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, onMounted, onUnmounted } from "vue";
+import { computed, ref, watch, onMounted, onUnmounted, inject } from "vue";
+import { calcSnap } from '../../core/snapEngine';
+import type { SnapLine, ContainerRect } from '../../core/snapEngine';
+import { calcSnapWithContainer } from '../../core/snapEngine'
 import { useEditorStore } from "../../store/editorStore";
 import { createResizeCommand } from "../../core/commands/resizeElement";
 import { createGroupMoveCommand } from "../../core/commands/moveGroupElement";
@@ -145,6 +148,9 @@ const props = defineProps<{
 }>();
 
 const store = useEditorStore();
+
+const setSnapLines = inject<(lines: SnapLine[]) => void>('setSnapLines')
+const getContainerRect = inject<() => ContainerRect>('getContainerRect')
 
 // =====================
 // STATE
@@ -230,7 +236,7 @@ const transformStyle = computed(() => ({
 const boxStyle = computed(() => ({
   width: "100%",
   height: props.element.heightMode === "auto" ? "auto" : "100%",
-  border: isSelected.value ? "1px solid blue" : "none",
+  border: isSelected.value ? "1px solid #4A6B4D" : "none",
 }));
 
 const contentStyle = computed(() => ({
@@ -283,17 +289,50 @@ const startDrag = (e: MouseEvent) => {
 };
 
 const onDrag = (e: MouseEvent) => {
-  const dx = e.clientX - startX;
-  const dy = e.clientY - startY;
+  const dx = e.clientX - startX
+  const dy = e.clientY - startY
 
-  store.selectedIds.forEach((id) => {
-    const init = initialPositions[id];
-    if (!init) return;
-    store.move(id, init.x + dx, init.y + dy);
-  });
-};
+  // Tính vị trí raw trước khi snap (chỉ element đang kéo)
+  const leadEl = store.findElementById(props.element.id)
+  if (!leadEl) return
+
+  const rawX = initialPositions[props.element.id].x + dx
+  const rawY = initialPositions[props.element.id].y + dy
+
+  // Lấy elements khác làm snap target
+  const others = store.activeSectionElements
+    .filter(el => !store.selectedIds.includes(el.id))
+    .map(el => ({ x: el.x, y: el.y, width: el.width, height: el.height }))
+
+  // Lấy container rect từ DOM tại thời điểm drag
+    const container = getContainerRect?.() ?? {
+      x: 0, y: 0, width: 800, height: 600, paddingX: 48, paddingY: 48
+    }
+
+
+  const result = calcSnapWithContainer(
+    { x: rawX, y: rawY, width: leadEl.width, height: leadEl.height },
+    others,
+    container
+  )
+
+  // Delta bù từ snap
+  const snapDx = result.x - rawX
+  const snapDy = result.y - rawY
+
+  // Apply cho toàn bộ selection (group drag vẫn hoạt động)
+  store.selectedIds.forEach(id => {
+    const init = initialPositions[id]
+    if (!init) return
+    store.move(id, init.x + dx + snapDx, init.y + dy + snapDy)
+  })
+
+  // Render guide lines
+  setSnapLines?.(result.lines)
+}
 
 const stopDrag = () => {
+  setSnapLines?.([])
   const items = store.selectedIds
     .map((id) => {
       const el = store.findElementById(id);
@@ -340,6 +379,7 @@ let startRotationRad = 0;
 
 let initialFontSize = 0;
 let startPointerLocal = { x: 0, y: 0 };
+let resizeInitialHeightMode: "auto" | "fixed" = "fixed";
 let initialRect = {
   x: 0,
   y: 0,
@@ -434,6 +474,7 @@ const startResize = (e: MouseEvent, dir: string) => {
     ? props.element.height
     : 40;
   startHeight = actualHeight;
+  resizeInitialHeightMode = props.element.heightMode || "fixed";
   startCenterX = props.element.x + startWidth / 2;
   startCenterY = props.element.y + startHeight / 2;
   startRotationRad = ((props.element.rotation || 0) * Math.PI) / 180;
@@ -448,8 +489,20 @@ const startResize = (e: MouseEvent, dir: string) => {
     fontSize: props.element.fontSize || 16,
   };
 
-  if (dir === "left" || dir === "right") {
+  const isEdge = dir === "left" || dir === "right";
+
+  if (isEdge) {
     store.setHeightMode(props.element.id, "auto");
+    store.resize(
+      props.element.id,
+      props.element.width,
+      actualHeight,
+      props.element.fontSize
+    );
+  } else {
+    // Corner resize sau khi rotate cần box hình học ổn định theo height cố định,
+    // nếu để auto thì handle đáy có thể lệch khỏi border.
+    store.setHeightMode(props.element.id, "fixed");
     store.resize(
       props.element.id,
       props.element.width,
@@ -565,7 +618,7 @@ const stopResize = () => {
     el.height !== initialRect.height;
 
   if (hasChanged) {
-    store.setHeightMode(props.element.id, "fixed");
+    store.setHeightMode(props.element.id, isEdge ? "auto" : "fixed");
     store.executeCommand(
       createResizeCommand(store, {
         id: props.element.id,
@@ -583,6 +636,9 @@ const stopResize = () => {
         newFontSize: el.fontSize || 16,
       })
     );
+  } else {
+    // Không có thay đổi: khôi phục mode ban đầu để tránh side effect.
+    store.setHeightMode(props.element.id, resizeInitialHeightMode);
   }
 
   isResizing.value = false;
@@ -678,6 +734,7 @@ const stopRotate = () => {
 }
 
 .el-transform {
+  position: relative;
   transform-origin: center center;
 }
 
@@ -697,62 +754,65 @@ const stopRotate = () => {
 }
 
 .resize-handle {
-  width: 12px;
-  height: 12px;
-  background: blue;
+  width: 10px;
+  height: 10px;
+  background: $sage-dark;
   position: absolute;
   z-index: 3;
   border-radius: 50%;
   pointer-events: auto;
+  &:hover {
+    background: $sage-light;
+  }
 }
 .resize-handle.tl {
-  left: -6px;
-  top: -6px;
+  left: -4px;
+  top: -4px;
 }
 .resize-handle.tr {
-  right: -6px;
-  top: -6px;
+  right: -4px;
+  top: -4px;
 }
 
 .resize-handle.bl {
-  left: -6px;
-  bottom: -6px;
+  left: -4px;
+  bottom: -4px;
 }
 
 .resize-handle.br {
-  right: -6px;
-  bottom: -6px;
+  right: -4px;
+  bottom: -4px;
 }
 
 .resize-handle.left {
-  width: 8px;
+  width: 6px;
   height: 18px;
-  background: blue;
+  background: $sage-dark;
   position: absolute;
   z-index: 3;
-  left: -5px;
+  left: -3px;
   top: 50%;
   transform: translateY(-50%);
   border-radius: 4px;
   &.is-active,
   &:hover {
-    background: #3b82f6;
+    background: $sage-light;
   }
 }
 
 .resize-handle.right {
-  width: 8px;
+  width: 6px;
   height: 18px;
-  background: blue;
+  background: $sage-dark;
   position: absolute;
   z-index: 3;
-  right: -5px;
+  right: -3px;
   top: 50%;
   transform: translateY(-50%);
   border-radius: 4px;
   &.is-active,
   &:hover {
-    background: #3b82f6;
+    background: $sage-light;
   }
 }
 </style>

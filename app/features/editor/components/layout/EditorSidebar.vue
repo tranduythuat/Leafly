@@ -1,12 +1,12 @@
 <template>
-  <div class="flex h-full w-md">
+  <div class="flex h-full w-xs">
     <!-- LEFT ICON BAR -->
     <div class="w-16 border-r flex flex-col py-4 gap-4">
       <button
         v-for="item in tabs"
         :key="item.key"
         @click="active = item.key"
-        class="flex flex-col border-black"
+        class="flex flex-col justify-center items-center border-black"
       >
         <component :is="item.icon" class="w-5 h-5" />
         {{ item.label }}
@@ -28,16 +28,16 @@ const active = ref("text")
 const tabs = [
   { 
     key: "text", 
-    label: "Văn bản", 
+    label: "Text", 
     icon: Type
   },
-  { key: "image", label: "Hình ảnh", icon: Image },
-  { key: "music", label: "Âm nhạc", icon: Music }
+  { key: "image", label: "Images", icon: Image },
+  { key: "music", label: "Music", icon: Music }
 ]
 </script>
 
 <style lang="scss" scoped>
   .h-full {
-    width: 430px;
+    width: 380px;
   }
 </style>

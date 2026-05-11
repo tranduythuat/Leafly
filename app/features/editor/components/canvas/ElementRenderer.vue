@@ -1,5 +1,5 @@
 <template>
-  <div class="section-canvas" :style="sectionStyle">
+  <div ref="canvasRef" class="section-canvas" :style="sectionStyle">
     <div v-if="!sortedElements.length" class="section-canvas__empty">
       <strong>Empty section</strong>
       <p>Add a text or image block from the left panel to start composing this section.</p>
@@ -13,14 +13,17 @@
     />
 
     <BoundingBox v-if="isActiveSection" :section-id="section.id" />
+    <GuideLines v-if="isActiveSection" :lines="snapLines" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, provide, ref } from "vue";
 import type { EditorElement, Section } from "../../types"
 import { useEditorStore } from "../../store/editorStore"
-
+import type { SnapLine } from '../../core/snapEngine'
+import type { ContainerRect } from '../../core/snapEngine'
+import GuideLines from './GuideLines.vue'
 import TextElement from '../elements/TextElement.vue'
 import ImageElement from '../elements/ImageElement.vue'
 import BoundingBox from "./BoundingBox.vue"
@@ -30,6 +33,43 @@ const props = defineProps<{
 }>()
 
 const store = useEditorStore()
+
+const canvasRef = ref<HTMLElement | null>(null)
+const snapLines = ref<SnapLine[]>([])
+// Provide để TextElement/ImageElement có thể push lines lên
+provide('setSnapLines', (lines: SnapLine[]) => {
+  snapLines.value = lines
+})
+
+const getContainerRect = (): ContainerRect => {
+  const el = canvasRef.value
+  if (!el) {
+    return {
+      x: 0, y: 0,
+      width: props.section.style.minHeight,  // fallback
+      height: props.section.style.minHeight,
+      paddingX: props.section.style.padding,
+      paddingY: props.section.style.padding,
+    }
+  }
+
+  return {
+    x: 0,
+    y: 0,
+    width:  el.clientWidth,
+    height: el.clientHeight,
+    paddingX: props.section.style.padding,
+    paddingY: props.section.style.padding,
+  }
+}
+
+provide('setSnapLines', (lines: SnapLine[]) => {
+  snapLines.value = lines
+})
+
+// Provide container rect getter — dùng getter thay vì reactive
+// để luôn đọc DOM mới nhất tại thời điểm drag
+provide('getContainerRect', getContainerRect)
 
 const sortedElements = computed(() =>
   [...props.section.elements].sort((a, b) => a.zIndex - b.zIndex)
