@@ -6,21 +6,39 @@
     :style="positionStyle"
     @click.stop
     @mousedown.stop="onMouseDown"
+    @dblclick.stop="startEditing"
   >
     <ElementToolbar
-      v-if="isSelected && store.selectedIds.length === 1"
+      v-if="isSelected && store.selectedIds.length === 1 && !isEditing"
       :element="element"
       :isSelected="isSelected"
     />
 
     <div class="el-transform" :style="transformStyle">
       <div class="el-box" :style="boxStyle">
-        <div class="el-content" :style="contentStyle">
-          {{ element.content }}
-        </div>
+        <!-- EDITING MODE: contenteditable div -->
+        <div
+          v-if="isEditing"
+          ref="editRef"
+          class="el-content el-content--editing"
+          :style="contentStyle"
+          contenteditable="true"
+          @input="onInput"
+          @keydown="onKeyDown"
+          @blur="stopEditing"
+          @mousedown.stop
+          @click.stop
+        >{{ element.content }}</div>
+
+        <!-- VIEW MODE: normal div -->
+        <div
+          v-else
+          class="el-content"
+          :style="contentStyle"
+        >{{ element.content }}</div>
       </div>
 
-      <div class="el-overlay">
+      <div class="el-overlay" v-if="!isEditing">
         <div
           v-if="isSelected && (!isResizing || activeResizeHandle === 'tl')"
           class="resize-handle tl"
@@ -83,7 +101,8 @@
         isSelected &&
         store.selectedIds.length === 1 &&
         !isRotating &&
-        !isResizing
+        !isResizing &&
+        !isEditing
       "
       :style="pillStyle"
       @click.stop
@@ -132,7 +151,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, onMounted, onUnmounted, inject } from "vue";
+import { computed, ref, watch, onMounted, onUnmounted, inject, nextTick } from "vue";
 import { calcSnap } from '../../core/snapEngine';
 import type { SnapLine, ContainerRect } from '../../core/snapEngine';
 import { calcSnapWithContainer } from '../../core/snapEngine'
@@ -140,6 +159,7 @@ import { useEditorStore } from "../../store/editorStore";
 import { createResizeCommand } from "../../core/commands/resizeElement";
 import { createGroupMoveCommand } from "../../core/commands/moveGroupElement";
 import { createRotateCommand } from "../../core/commands/rotateElement";
+import { createUpdateStyleCommand } from "../../core/commands/updateStyle";
 import ElementToolbar from "./ElementToolbar.vue";
 import type { TextElement as TextElementType } from "../../types";
 
@@ -158,6 +178,109 @@ const getContainerRect = inject<() => ContainerRect>('getContainerRect')
 
 const isSelected = computed(() => store.selectedIds.includes(props.element.id));
 const elRef = ref<HTMLElement | null>(null);
+const editRef = ref<HTMLElement | null>(null);
+
+// =====================
+// INLINE EDITING
+// =====================
+
+const isEditing = ref(false);
+let editingOldContent = '';
+
+const startEditing = () => {
+  // Select element nếu chưa select
+  if (!isSelected.value) {
+    store.select(props.element.id, false);
+  }
+
+  isEditing.value = true;
+  editingOldContent = props.element.content;
+
+  nextTick(() => {
+    if (!editRef.value) return;
+
+    editRef.value.focus();
+
+    // Đặt cursor về cuối text
+    const range = document.createRange();
+    const sel = window.getSelection();
+    range.selectNodeContents(editRef.value);
+    range.collapse(false);
+    sel?.removeAllRanges();
+    sel?.addRange(range);
+  });
+};
+
+const stopEditing = () => {
+  if (!isEditing.value) return;
+  isEditing.value = false;
+
+  const newContent = editRef.value?.innerText ?? props.element.content;
+
+  // Chỉ tạo command nếu nội dung thực sự thay đổi
+  if (newContent !== editingOldContent) {
+    store.executeCommand(
+      createUpdateStyleCommand(store, {
+        id: props.element.id,
+        oldData: { content: editingOldContent },
+        newData: { content: newContent },
+      })
+    );
+  }
+};
+
+const onInput = (e: Event) => {
+  const target = e.target as HTMLElement;
+  // Cập nhật store realtime để text hiển thị ngay
+  store.updateText(props.element.id, target.innerText);
+};
+
+const onKeyDown = (e: KeyboardEvent) => {
+  // Escape: huỷ thay đổi
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    // Khôi phục nội dung cũ
+    store.updateText(props.element.id, editingOldContent);
+    isEditing.value = false;
+    return;
+  }
+
+  // Enter không có Shift: thoát editing (Shift+Enter = xuống dòng)
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    editRef.value?.blur();
+    return;
+  }
+
+  // Chặn các phím shortcut global (Ctrl+Z, Delete...) không bị bắt khi đang gõ
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+    e.stopPropagation();
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+    e.stopPropagation();
+  }
+};
+
+// Thoát edit mode khi click ngoài element
+const onGlobalClick = (e: MouseEvent) => {
+  if (!isEditing.value) return;
+  if (elRef.value && !elRef.value.contains(e.target as Node)) {
+    editRef.value?.blur();
+  }
+};
+
+onMounted(() => {
+  document.addEventListener('mousedown', onGlobalClick, true);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('mousedown', onGlobalClick, true);
+  if (typeof cancelAnimationFrame !== "undefined") cancelAnimationFrame(rafId);
+});
+
+// =====================
+// PILL POSITION
+// =====================
 
 const pillPos = ref({ x: 0, y: 0 });
 const PILL_GAP = 22;
@@ -223,8 +346,8 @@ const positionStyle = computed(() => ({
   width: props.element.width + "px",
   height:
     props.element.heightMode === "auto" ? "auto" : props.element.height + "px",
-  cursor: isSelected.value ? "move" : "default",
-  userSelect: "none",
+  cursor: isEditing.value ? "text" : isSelected.value ? "move" : "default",
+  userSelect: isEditing.value ? "text" : "none",
   zIndex: 2,
 }));
 
@@ -236,7 +359,12 @@ const transformStyle = computed(() => ({
 const boxStyle = computed(() => ({
   width: "100%",
   height: props.element.heightMode === "auto" ? "auto" : "100%",
-  border: isSelected.value ? "1px solid #4A6B4D" : "none",
+  border: isEditing.value
+    ? "1.5px solid #4A6B4D"
+    : isSelected.value
+    ? "1px solid #4A6B4D"
+    : "none",
+  borderRadius: isEditing.value ? "4px" : "0",
 }));
 
 const contentStyle = computed(() => ({
@@ -248,6 +376,9 @@ const contentStyle = computed(() => ({
 }));
 
 const onMouseDown = (e: MouseEvent) => {
+  // Nếu đang edit thì không làm gì (cho phép browser xử lý cursor)
+  if (isEditing.value) return;
+
   if (e.button !== 0) return;
 
   const isMulti = e.shiftKey;
@@ -272,6 +403,7 @@ let startY = 0;
 let initialPositions: Record<string, { x: number; y: number }> = {};
 
 const startDrag = (e: MouseEvent) => {
+  if (isEditing.value) return;
   e.preventDefault();
 
   initialPositions = {};
@@ -305,9 +437,9 @@ const onDrag = (e: MouseEvent) => {
     .map(el => ({ x: el.x, y: el.y, width: el.width, height: el.height }))
 
   // Lấy container rect từ DOM tại thời điểm drag
-    const container = getContainerRect?.() ?? {
-      x: 0, y: 0, width: 800, height: 600, paddingX: 48, paddingY: 48
-    }
+  const container = getContainerRect?.() ?? {
+    x: 0, y: 0, width: 800, height: 600, paddingX: 48, paddingY: 48
+  }
 
 
   const result = calcSnapWithContainer(
@@ -744,6 +876,16 @@ const stopRotate = () => {
 
 .el-content {
   width: 100%;
+
+  &--editing {
+    outline: none;
+    cursor: text;
+    caret-color: #4A6B4D;
+    // Highlight selection màu sage
+    &::selection {
+      background: rgba(74, 107, 77, 0.25);
+    }
+  }
 }
 
 .el-overlay {
@@ -837,10 +979,7 @@ const stopRotate = () => {
   display: flex;
   gap: 4px;
   background: transparent;
-  // border: 1px solid #dbd5ca;
-  // border-radius: 20px;
   padding: 4px 6px;
-  // box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
   pointer-events: auto;
 }
 
