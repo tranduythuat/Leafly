@@ -99,7 +99,7 @@ const stopResize = () => {
 .canvas-stack {
   display: flex;
   flex-direction: column;
-  max-width: 720px;
+  max-width: 500px;
   margin: 0 auto;
   min-height: 100%;
 }
