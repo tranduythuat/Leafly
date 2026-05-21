@@ -5,6 +5,7 @@ export default defineNuxtConfig({
   modules: ['@nuxtjs/tailwindcss', '@pinia/nuxt'],
   css: [
     // '@/assets/css/tailwind.css',
+    // '@tabler/icons-webfont/dist/tabler-icons.min.css',
     '@/assets/scss/main.scss',
   ],
   tailwindcss: {
