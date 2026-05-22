@@ -1,6 +1,7 @@
 <template>
   <div
     ref="elRef"
+    :class="attrs.class"
     :data-id="element.id"
     :style="style"
     @click.stop
@@ -107,21 +108,25 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted, watch, inject } from "vue";
+import { computed, ref, onMounted, onUnmounted, watch, inject, useAttrs } from "vue";
 import { useEditorStore } from "../../store/editorStore";
 import { createResizeCommand } from "../../core/commands/resizeImage";
 import { createRotateCommand } from "../../core/commands/rotateElement";
 import { calcSnapWithContainer } from '../../core/snapEngine'
-import { calcSnap, ContainerRect } from '../../core/snapEngine'
-import type { SnapLine } from '../../core/snapEngine'
+import type { ContainerRect, SnapLine } from '../../core/snapEngine'
 import type { ImageElement as ImageElementType } from "../../types";
 import ElementToolbar from "./ElementToolbar.vue";
+
+defineOptions({
+  inheritAttrs: false,
+});
 
 const props = defineProps<{
   element: ImageElementType;
 }>();
 
 const store = useEditorStore();
+const attrs = useAttrs();
 
 const isSelected = computed(() => store.selectedIds.includes(props.element.id));
 const elRef = ref<HTMLElement | null>(null);

@@ -1,5 +1,11 @@
 <template>
-  <div ref="canvasRef" class="section-canvas" :style="sectionStyle">
+  <div
+    ref="canvasRef"
+    class="section-canvas"
+    :style="sectionStyle"
+    :data-section-id="section.id"
+    @contextmenu.prevent="onContextMenu"
+  >
     <div v-if="!sortedElements.length" class="section-canvas__empty">
       <strong>Empty section</strong>
       <p>Add a text or image block from the left panel to start composing this section.</p>
@@ -10,11 +16,25 @@
       :key="el.id"
       :is="resolveComponent(el)"
       :element="el"
+      :class="{ 'el--picker-hover': el.id === pickerHoveredId && pickerHoveredId !== null }"
     />
 
     <BoundingBox v-if="isActiveSection" :section-id="section.id" />
     <GuideLines v-if="isActiveSection" :lines="snapLines" />
   </div>
+
+  <!-- Layer Picker -->
+  <LayerPicker
+    :visible="pickerVisible"
+    :x="pickerX"
+    :y="pickerY"
+    :items="pickerItems"
+    :selected-id="store.selectedIds[0] ?? null"
+    :hovered-id="pickerHoveredId"
+    @select="onPickerSelect"
+    @hover="onPickerHover"
+    @close="closePicker"
+  />
 </template>
 
 <script setup lang="ts">
@@ -27,6 +47,8 @@ import GuideLines from './GuideLines.vue'
 import TextElement from '../elements/TextElement.vue'
 import ImageElement from '../elements/ImageElement.vue'
 import BoundingBox from "./BoundingBox.vue"
+import LayerPicker from "./LayerPicker.vue"
+import type { LayerPickerItem } from "./LayerPicker.vue"
 
 const props = defineProps<{
   section: Section
@@ -36,7 +58,7 @@ const store = useEditorStore()
 
 const canvasRef = ref<HTMLElement | null>(null)
 const snapLines = ref<SnapLine[]>([])
-// Provide để TextElement/ImageElement có thể push lines lên
+
 provide('setSnapLines', (lines: SnapLine[]) => {
   snapLines.value = lines
 })
@@ -46,7 +68,7 @@ const getContainerRect = (): ContainerRect => {
   if (!el) {
     return {
       x: 0, y: 0,
-      width: props.section.style.minHeight,  // fallback
+      width: props.section.style.minHeight,
       height: props.section.style.minHeight,
       paddingX: props.section.style.padding,
       paddingY: props.section.style.padding,
@@ -63,12 +85,6 @@ const getContainerRect = (): ContainerRect => {
   }
 }
 
-provide('setSnapLines', (lines: SnapLine[]) => {
-  snapLines.value = lines
-})
-
-// Provide container rect getter — dùng getter thay vì reactive
-// để luôn đọc DOM mới nhất tại thời điểm drag
 provide('getContainerRect', getContainerRect)
 
 const sortedElements = computed(() =>
@@ -96,8 +112,109 @@ const sectionStyle = computed(() => ({
 const resolveComponent = (el: EditorElement) => {
   if (el.type === 'text') return TextElement
   if (el.type === 'image') return ImageElement
-
   return TextElement
+}
+
+// =====================
+// LAYER PICKER
+// =====================
+
+const pickerVisible = ref(false)
+const pickerX = ref(0)
+const pickerY = ref(0)
+const pickerItems = ref<LayerPickerItem[]>([])
+const pickerHoveredId = ref<string | null>(null)
+
+/**
+ * Tìm tất cả elements chứa điểm (px, py) trong hệ toạ độ section.
+ * Trả về đã sắp xếp theo zIndex cao → thấp (để menu hiện từ trên xuống).
+ */
+const getElementsAtPoint = (px: number, py: number): EditorElement[] => {
+  return props.section.elements
+    .filter(el => {
+      return (
+        px >= el.x &&
+        px <= el.x + el.width &&
+        py >= el.y &&
+        py <= el.y + el.height
+      )
+    })
+    .sort((a, b) => b.zIndex - a.zIndex)
+}
+
+const buildPickerItems = (elements: EditorElement[]): LayerPickerItem[] => {
+  return elements.map(el => {
+    if (el.type === 'text') {
+      const preview = el.content?.slice(0, 20) ?? 'Text'
+      return {
+        id: el.id,
+        type: 'text',
+        label: preview + (el.content?.length > 20 ? '…' : ''),
+        zIndex: el.zIndex,
+        color: el.color ?? '#36402d',
+      }
+    }
+
+    if (el.type === 'image') {
+      return {
+        id: el.id,
+        type: 'image',
+        label: 'Image',
+        zIndex: el.zIndex,
+        src: el.src,
+      }
+    }
+
+    return {
+      id: el.id,
+      type: el.type,
+      label: 'Element',
+      zIndex: el.zIndex,
+    }
+  })
+}
+
+const onContextMenu = (e: MouseEvent) => {
+  // Chuyển toạ độ chuột sang hệ toạ độ section (relative)
+  const canvas = canvasRef.value
+  if (!canvas) return
+
+  const rect = canvas.getBoundingClientRect()
+  const px = e.clientX - rect.left
+  const py = e.clientY - rect.top
+
+  const hits = getElementsAtPoint(px, py)
+
+  // Không có element nào → để browser context menu mặc định (hoặc bỏ qua)
+  if (hits.length === 0) return
+
+  // Chỉ 1 element → select thẳng, không cần menu
+  if (hits.length === 1) {
+    store.select(hits[0].id, false)
+    return
+  }
+
+  // Nhiều element → hiện picker
+  store.selectSection(props.section.id)
+
+  pickerItems.value = buildPickerItems(hits)
+  pickerX.value = e.clientX
+  pickerY.value = e.clientY
+  pickerVisible.value = true
+}
+
+const onPickerSelect = (id: string) => {
+  store.select(id, false)
+  pickerHoveredId.value = null
+}
+
+const onPickerHover = (id: string | null) => {
+  pickerHoveredId.value = id
+}
+
+const closePicker = () => {
+  pickerVisible.value = false
+  pickerHoveredId.value = null
 }
 </script>
 
@@ -105,41 +222,7 @@ const resolveComponent = (el: EditorElement) => {
 .section-canvas {
   width: min(100%, 720px);
   margin: 0 auto;
-  /* border-radius: 24px; */
   box-shadow: 0 12px 40px rgba(54, 64, 45, 0.08);
-  /* overflow: hidden; */
-}
-
-.section-canvas__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1.25rem;
-  padding-bottom: 0.85rem;
-  border-bottom: 1px solid rgba(123, 143, 98, 0.18);
-}
-
-.section-canvas__eyebrow {
-  color: #92a07d;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.section-canvas__title {
-  color: #36402d;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.section-canvas__badge {
-  border: 1px solid #d7d2c7;
-  border-radius: 999px;
-  padding: 0.35rem 0.7rem;
-  color: #7d846d;
-  font-size: 0.76rem;
 }
 
 .section-canvas__empty {
@@ -164,5 +247,16 @@ const resolveComponent = (el: EditorElement) => {
     line-height: 1.6;
     font-size: 0.88rem;
   }
+}
+</style>
+
+<!-- Global: highlight khi hover từ picker -->
+<style>
+.el--picker-hover {
+  outline: 2px solid #E040FB !important;
+  outline-offset: 2px;
+  border-radius: 4px;
+  transition: outline .08s;
+  z-index: 50 !important;
 }
 </style>
