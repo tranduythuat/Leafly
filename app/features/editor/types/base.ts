@@ -31,6 +31,9 @@ export interface TextElement extends BaseElement {
 export interface ImageElement extends BaseElement {
   type: 'image'
   src: string
+  opacity?: number
+  flipH?: boolean
+  flipV?: boolean
   style?: {
     objectFit?: "cover" | "contain" | "fill"
   }

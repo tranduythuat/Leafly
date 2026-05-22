@@ -15,11 +15,7 @@
 
     <img
       :src="element.src"
-      :style="{
-        width: '100%',
-        height: '100%',
-        objectFit: element.style?.objectFit || 'cover'
-      }"
+      :style="imageStyle"
       draggable="false"
     />
 
@@ -110,6 +106,7 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted, watch, inject, useAttrs } from "vue";
 import { useEditorStore } from "../../store/editorStore";
+import { createMoveCommand } from "../../core/commands/moveElement";
 import { createResizeCommand } from "../../core/commands/resizeImage";
 import { createRotateCommand } from "../../core/commands/rotateElement";
 import { calcSnapWithContainer } from '../../core/snapEngine'
@@ -145,6 +142,14 @@ const style = computed(() => ({
   cursor: isSelected.value ? "move" : "default",
   transformOrigin: "center center",
   transform: `rotate(${props.element.rotation || 0}deg)`,
+}));
+
+const imageStyle = computed(() => ({
+  width: "100%",
+  height: "100%",
+  objectFit: props.element.style?.objectFit || "cover",
+  opacity: props.element.opacity ?? 1,
+  transform: `scale(${props.element.flipH ? -1 : 1}, ${props.element.flipV ? -1 : 1})`,
 }));
 
 // ===== drag =====
@@ -201,6 +206,20 @@ const onDrag = (e: MouseEvent) => {
 
 const stopDrag = () => {
   setSnapLines?.([])
+
+  const el = store.findElementById(props.element.id);
+  if (el && (el.x !== initialX || el.y !== initialY)) {
+    store.executeCommand(
+      createMoveCommand(store, {
+        id: props.element.id,
+        oldX: initialX,
+        oldY: initialY,
+        newX: el.x,
+        newY: el.y,
+      })
+    );
+  }
+
   document.body.style.userSelect = "";
   window.removeEventListener("mousemove", onDrag);
   window.removeEventListener("mouseup", stopDrag);

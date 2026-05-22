@@ -18,7 +18,7 @@
         class="hidden-input"
         @change="onFileChange"
       />
-      <i class="ti ti-cloud-upload" aria-hidden="true"></i>
+      <IconCloudUpload stroke={2} />
       <p class="upload-primary">Drop images here</p>
       <p class="upload-sub">or <span class="upload-link">click to browse</span></p>
     </div>
@@ -26,10 +26,10 @@
     <!-- ── QUICK INSERT ── -->
     <div class="quick-row">
       <button class="quick-btn" @click="showUrlInput = !showUrlInput">
-        <i class="ti ti-link" aria-hidden="true"></i>URL
+        <IconLink stroke={2} />URL
       </button>
       <button class="quick-btn" @click="pasteFromClipboard">
-        <i class="ti ti-clipboard" aria-hidden="true"></i>Paste
+        <IconClipboardCheck stroke={2} />Paste
       </button>
     </div>
 
@@ -96,7 +96,7 @@
 </template>
 
 <script setup lang="ts">
-import { IconArrowRight, IconCheck, IconX } from '@tabler/icons-vue';
+import { IconArrowRight, IconCheck, IconX, IconLink, IconClipboardCheck, IconCloudUpload} from '@tabler/icons-vue';
 import { ref, computed } from 'vue'
 import { useImageLibrary, type ImageAsset } from '../../../composables/useImageLibrary'
 import { useEditorStore } from '../../../store/editorStore'
@@ -208,6 +208,10 @@ const removeAsset = (id: string) => {
   text-align: center;
   cursor: pointer;
   transition: background .15s, border-color .15s;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 
   &:hover,
   &--drag {

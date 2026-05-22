@@ -14,7 +14,7 @@
     <!-- ── REPLACE ── -->
     <div class="ii-block">
       <label class="ii-replace-btn">
-        <i class="ti ti-replace" aria-hidden="true"></i>
+        <IconZoomReplace stroke={2} />
         Replace image
         <input
           type="file"
@@ -83,7 +83,8 @@
           :class="{ 'fit-btn--active': currentFit === fit.value }"
           @click="setFit(fit.value)"
         >
-          <i :class="`ti ti-${fit.icon}`" aria-hidden="true"></i>
+          <component :is="fit.icon" :size="18" />
+          <!-- <i :class="`ti ti-${fit.icon}`" aria-hidden="true"></i> -->
           {{ fit.label }}
         </button>
       </div>
@@ -114,14 +115,14 @@
           :class="{ 'action-btn--active': flipH }"
           @click="toggleFlipH"
         >
-          <i class="ti ti-flip-horizontal" aria-hidden="true"></i>Flip H
+          <IconFlipVertical stroke={2} />
         </button>
         <button
           class="action-btn"
           :class="{ 'action-btn--active': flipV }"
           @click="toggleFlipV"
         >
-          <i class="ti ti-flip-vertical" aria-hidden="true"></i>Flip V
+          <IconFlipHorizontal stroke={2} />
         </button>
       </div>
       <div class="field" style="margin-top: 8px">
@@ -159,10 +160,10 @@
       <div class="ii-block-title">Layer order</div>
       <div class="row2">
         <button class="action-btn" @click="bringToFront">
-          <i class="ti ti-square-chevron-up" aria-hidden="true"></i>Front
+          <IconSquareChevronsUp stroke={2} />Front
         </button>
         <button class="action-btn" @click="sendToBack">
-          <i class="ti ti-square-chevron-down" aria-hidden="true"></i>Back
+          <IconSquareChevronsDown stroke={2} />Back
         </button>
       </div>
     </div>
@@ -170,7 +171,7 @@
     <!-- ── DELETE ── -->
     <div class="ii-block" style="border-bottom: none">
       <button class="del-btn" @click="removeElement">
-        <i class="ti ti-trash" aria-hidden="true"></i>
+        <IconTrashX stroke={2} />
         Remove element
       </button>
     </div>
@@ -178,6 +179,7 @@
 </template>
 
 <script setup lang="ts">
+import { IconFlipVertical, IconFlipHorizontal, IconArrowsMaximize, IconArrowsMinimize, IconAspectRatio, IconZoomReplace, IconSquareChevronsUp, IconSquareChevronsDown, IconTrashX } from '@tabler/icons-vue';
 import { computed, ref, watch, onMounted } from "vue";
 import { useEditorStore } from "../store/editorStore";
 import { createUpdateStyleCommand } from "../core/commands/updateStyle";
@@ -280,9 +282,9 @@ const onReplaceFile = (e: Event) => {
 
 // ── Object fit ──
 const fits = [
-  { value: "cover", label: "Cover", icon: "arrows-maximize" },
-  { value: "contain", label: "Contain", icon: "arrows-minimize" },
-  { value: "fill", label: "Fill", icon: "aspect-ratio" },
+  { value: "cover", label: "Cover", icon: IconArrowsMaximize },
+  { value: "contain", label: "Contain", icon: IconArrowsMinimize},
+  { value: "fill", label: "Fill", icon: IconAspectRatio },
 ];
 
 const currentFit = computed(
