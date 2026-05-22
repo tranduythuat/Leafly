@@ -1,4 +1,4 @@
-1. Cấu trúc project hoàn chỉnh
+1. Cấu trúc project hoàn chỉnh (test)
 
 leafly-frontend
 │
