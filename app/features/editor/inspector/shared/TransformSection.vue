@@ -1,5 +1,5 @@
 <template>
-  <InsSection title="Transform">
+  <InsSection title="Transform" :default-open="defaultOpen">
     <!-- Rotation -->
     <div class="tf-rotation-row">
       <InsField
@@ -73,6 +73,7 @@ const props = defineProps<{
   element: CanvasElement
   showFlip?: boolean
   showOpacity?: boolean
+  defaultOpen?: boolean
 }>()
 
 const store = useEditorStore()

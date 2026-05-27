@@ -64,7 +64,7 @@ const title = computed(() => {
 
 <style scoped lang="scss">
 .editor-inspector {
-  width: 260px;
+  width: 380px;
   display: flex;
   flex-direction: column;
   border-left: 1px solid $cream-dark;

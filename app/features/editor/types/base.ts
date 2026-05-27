@@ -22,6 +22,7 @@ export interface BaseElement extends Position, Size {
 export interface TextElement extends BaseElement {
   type: 'text'
   content: string
+  fontFamily: string
   fontSize?: number
   color?: string
   alignment?: Alignment,

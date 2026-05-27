@@ -1,5 +1,5 @@
 <template>
-  <InsSection title="Position & Size">
+  <InsSection title="Position & Size" :default-open="defaultOpen">
     <div class="pos-row2">
       <InsField type="number" label="X" :model-value="Math.round(element.x)" unit="px"
         @update:model-value="patch('x', $event)" />
@@ -36,6 +36,7 @@ import type { CanvasElement } from '../../types'
 const props = defineProps<{
   element: CanvasElement
   showLockRatio?: boolean
+  defaultOpen?: boolean
 }>()
 
 const store = useEditorStore()

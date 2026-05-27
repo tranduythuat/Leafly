@@ -12,9 +12,23 @@
     <component :is="meta.component" :element="element" />
 
     <!-- Shared sections — bật/tắt theo registry -->
-    <PositionSection v-if="meta.shared.position" :element="element" />
-    <TransformSection v-if="meta.shared.transform" :element="element" />
-    <LayerSection v-if="meta.shared.layer" :element="element" />
+    <PositionSection 
+        v-if="meta.shared.position" 
+        :element="element" 
+        :show-lock-ratio="element.type === 'image'" 
+        :default-open="false" 
+    />
+    <TransformSection 
+        v-if="meta.shared.transform" 
+        :element="element" 
+        :show-flip="element.type === 'image' || element.type === 'album'"
+        :show-opacity="element.type === 'image'"
+        :default-open="false"
+    />
+    <LayerSection 
+        v-if="meta.shared.layer" :element="element" 
+        :default-open="false"
+    />
     <DeleteSection :element="element" />
   </div>
   <EmptyState v-else />
@@ -36,3 +50,23 @@ const meta = computed(() =>
   element.value ? getInspector(element.value.type) : null
 );
 </script>
+
+<style scoped lang="scss">
+.uni-ins {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: $blush transparent;
+
+  &::-webkit-scrollbar {
+    width: 3px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: $blush;
+    border-radius: 4px;
+  }
+}
+</style>

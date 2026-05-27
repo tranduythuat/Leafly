@@ -1,6 +1,7 @@
 <template>
   <div
     ref="elRef"
+    v-bind="$attrs"
     :data-id="element.id"
     class="el-position"
     :style="positionStyle"
@@ -162,6 +163,8 @@ import { createRotateCommand } from "../../core/commands/rotateElement";
 import { createUpdateStyleCommand } from "../../core/commands/updateStyle";
 import ElementToolbar from "./ElementToolbar.vue";
 import type { TextElement as TextElementType } from "../../types";
+
+defineOptions({ inheritAttrs: false })
 
 const props = defineProps<{
   element: TextElementType;
@@ -373,6 +376,7 @@ const boxStyle = computed(() => ({
 const contentStyle = computed(() => ({
   color: props.element.color,
   fontSize: (props.element.fontSize || 16) + "px",
+  fontFamily: (props.element as any).fontFamily ?? "'Playfair Display', serif",
   textAlign: props.element.alignment || "left",
   whiteSpace: "pre-line",
   lineHeight: 1.2,

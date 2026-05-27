@@ -1,5 +1,5 @@
 <template>
-  <InsSection title="Layer">
+  <InsSection title="Layer" :default-open="defaultOpen">
     <div class="layer-row">
       <div class="layer-z-badge" title="Current z-index">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -44,7 +44,11 @@ import { createBringToFrontCommand, createSendToBackCommand } from '../../core/c
 import { createUpdateStyleCommand } from '../../core/commands/updateStyle'
 import type { CanvasElement } from '../../types'
 
-const props = defineProps<{ element: CanvasElement }>()
+const props = defineProps<{ 
+  element: CanvasElement, 
+  defaultOpen?: boolean 
+}>()
+
 const store = useEditorStore()
 
 const bringToFront = () =>

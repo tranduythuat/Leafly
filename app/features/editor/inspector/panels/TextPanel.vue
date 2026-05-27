@@ -10,6 +10,31 @@
       "
     />
 
+    <!-- Font family -->
+    <div class="tp-field">
+      <span class="tp-label">Font family</span>
+      <div class="tp-font-wrap">
+        <select
+          :value="local.fontFamily"
+          class="tp-font-select"
+          :style="{ fontFamily: local.fontFamily }"
+          @change="local.fontFamily = ($event.target as HTMLSelectElement).value; debouncedApply()"
+        >
+          <optgroup v-for="group in fontGroups" :key="group.label" :label="group.label">
+            <option
+              v-for="font in group.fonts"
+              :key="font.value"
+              :value="font.value"
+              :style="{ fontFamily: font.value }"
+            >{{ font.label }}</option>
+          </optgroup>
+        </select>
+        <div class="tp-font-preview" :style="{ fontFamily: local.fontFamily }">
+          Aa — The quick brown fox
+        </div>
+      </div>
+    </div>
+
     <div class="tp-row2">
       <InsField
         type="number"
@@ -69,6 +94,44 @@ import type { TextElement } from "../../types";
 
 const props = defineProps<{ element: TextElement }>();
 const store = useEditorStore();
+
+// ── Font groups (Google Fonts — đã có sẵn trong _typography.scss) ──
+const fontGroups = [
+  {
+    label: 'Display / Serif',
+    fonts: [
+      { label: 'Playfair Display', value: "'Playfair Display', serif" },
+      { label: 'Cormorant Garamond', value: "'Cormorant Garamond', serif" },
+      { label: 'Georgia', value: 'Georgia, serif' },
+      { label: 'Times New Roman', value: "'Times New Roman', serif" },
+    ],
+  },
+  {
+    label: 'Sans-serif',
+    fonts: [
+      { label: 'Jost', value: "'Jost', sans-serif" },
+      { label: 'Inter', value: "'Inter', sans-serif" },
+      { label: 'Helvetica Neue', value: "'Helvetica Neue', sans-serif" },
+      { label: 'Arial', value: 'Arial, sans-serif' },
+    ],
+  },
+  {
+    label: 'Script / Handwriting',
+    fonts: [
+      { label: 'Dancing Script', value: "'Dancing Script', cursive" },
+      { label: 'Great Vibes', value: "'Great Vibes', cursive" },
+      { label: 'Pacifico', value: "'Pacifico', cursive" },
+      { label: 'Sacramento', value: "'Sacramento', cursive" },
+    ],
+  },
+  {
+    label: 'Monospace',
+    fonts: [
+      { label: 'Courier New', value: "'Courier New', monospace" },
+      { label: 'Roboto Mono', value: "'Roboto Mono', monospace" },
+    ],
+  },
+]
 
 // ── Inline SVG icon components ──
 const mkIcon = (d: string) =>
@@ -179,12 +242,14 @@ const alignments = [
   { value: "justify", label: "Justify", icon: AlignJustify },
 ];
 
+const DEFAULT_FONT = "'Playfair Display', serif";
 // ── Local reactive state ──
 let isSyncing = false;
 
 const local = reactive({
   content: "",
   fontSize: 16,
+  fontFamily: DEFAULT_FONT,
   color: "#000000",
   alignment: "left" as "left" | "center" | "right" | "justify",
 });
@@ -193,6 +258,7 @@ const syncFromElement = (el: TextElement) => {
   isSyncing = true;
   local.content = el.content;
   local.fontSize = el.fontSize ?? 16;
+  local.fontFamily = (el as any).fontFamily ?? DEFAULT_FONT
   local.color = el.color ?? "#000000";
   local.alignment = (el.alignment ?? "left") as any;
   isSyncing = false;
@@ -211,6 +277,7 @@ const applyNow = () => {
   const el = props.element;
   const noChange =
     el.content === local.content &&
+    ((el as any).fontFamily ?? DEFAULT_FONT) === local.fontFamily &&
     (el.fontSize ?? 16) === local.fontSize &&
     (el.color ?? "#000000") === local.color &&
     (el.alignment ?? "left") === local.alignment;
@@ -221,12 +288,14 @@ const applyNow = () => {
       id: el.id,
       oldData: {
         content: el.content,
+        fontFamily: (el as any).fontFamily,
         fontSize: el.fontSize,
         color: el.color,
         alignment: el.alignment,
       },
       newData: {
         content: local.content,
+        fontFamily: local.fontFamily,
         fontSize: local.fontSize,
         color: local.color,
         alignment: local.alignment,
@@ -257,6 +326,47 @@ const debouncedApply = debounce(applyNow, 280);
   color: $text-light;
 }
 
+/* Font family */
+.tp-font-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+ 
+.tp-font-select {
+  width: 100%;
+  border: 1px solid $cream-dark;
+  border-radius: $radius-sm;
+  padding: 5px 26px 5px 8px;
+  font-size: 12px;
+  background: $white;
+  color: $text-dark;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%238B7355' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  transition: border-color 0.15s;
+ 
+  &:focus { border-color: $sage; }
+}
+ 
+.tp-font-preview {
+  padding: 7px 10px;
+  background: $cream;
+  border: 1px solid $cream-dark;
+  border-radius: $radius-sm;
+  font-size: 13px;
+  color: $text-mid;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+/* Alignment */
 .tp-align-row {
   display: flex;
   gap: 4px;
