@@ -6,17 +6,15 @@
         <div class="editor-navbar__name">Leafly</div>
         <div class="editor-navbar__meta">Wedding Editor</div>
       </div>
+      <div class="editor-navbar__history">
+        <button class="editor-navbar__icon-btn" type="button" @click="undo">
+          <IconArrowBackUp stroke={2} />
+        </button>
+        <button class="editor-navbar__icon-btn" type="button" @click="redo">
+          <IconArrowForwardUp stroke={2} />
+        </button>
+      </div>
     </div>
-
-    <div class="editor-navbar__history">
-      <button class="editor-navbar__icon-btn" type="button" @click="undo">
-        Undo
-      </button>
-      <button class="editor-navbar__icon-btn" type="button" @click="redo">
-        Redo
-      </button>
-    </div>
-
     <div class="editor-navbar__actions">
       <button class="editor-navbar__ghost-btn" type="button">
         Preview
@@ -32,6 +30,7 @@
 </template>
 
 <script setup lang="ts">
+import {IconArrowBackUp, IconArrowForwardUp} from '@tabler/icons-vue';
 import { useEditorStore } from "../../store/editorStore";
 import { exportTemplate, generateHTML } from "../../utils/template";
 
@@ -66,7 +65,7 @@ const onExportHTML = () => {
 <style scoped lang="scss">
 .editor-navbar {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: 1fr auto;
   align-items: center;
   gap: 1rem;
   padding: 0.75rem 1rem;

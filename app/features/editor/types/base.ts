@@ -22,6 +22,7 @@ export interface BaseElement extends Position, Size {
 export interface TextElement extends BaseElement {
   type: 'text'
   content: string
+  fontFamily: string
   fontSize?: number
   color?: string
   alignment?: Alignment,
@@ -31,6 +32,9 @@ export interface TextElement extends BaseElement {
 export interface ImageElement extends BaseElement {
   type: 'image'
   src: string
+  opacity?: number
+  flipH?: boolean
+  flipV?: boolean
   style?: {
     objectFit?: "cover" | "contain" | "fill"
   }
