@@ -14,7 +14,8 @@
 <script setup lang="ts">
 import EditorNavbar from '~/features/editor/components/layout/EditorNavbar.vue'
 import EditorSidebar from '~/features/editor/components/layout/EditorSidebar.vue'
-import EditorInspector from '~/features/editor/components/layout/EditorInspector.vue'
+// import EditorInspector from '~/features/editor/components/layout/EditorInspector.vue'
+import EditorInspector from '~/features/editor/inspector/EditorInspector.vue'
 </script>
 
 <style scoped>

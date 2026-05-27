@@ -363,8 +363,11 @@ const boxStyle = computed(() => ({
     ? "1.5px solid #4A6B4D"
     : isSelected.value
     ? "1px solid #4A6B4D"
-    : "none",
-  borderRadius: isEditing.value ? "4px" : "0",
+    : `${(props.element as any).borderWidth || 0}px solid ${(props.element as any).borderColor || "transparent"}`,
+  borderRadius: `${(props.element as any).borderRadius || 0}px`,
+  backgroundColor: (props.element as any).backgroundColor || "transparent",
+  padding: `${(props.element as any).padding || 0}px`,
+  boxSizing: "border-box",
 }));
 
 const contentStyle = computed(() => ({

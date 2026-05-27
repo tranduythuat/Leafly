@@ -1,5 +1,15 @@
 <template>
   <div class="canvas-body" @click.self="store.clearSelection()">
+    <!-- <div class="canvas-body">
+      <div
+        class="canvas-page"
+        :style="{ height: pageHeight + 'px' }"
+      >
+        <ElementRenderer :section="store.sections[0]" />
+
+        <div class="page-resize-handle" @mousedown="startResize" />
+      </div>
+    </div> -->
     <div class="canvas-stack">
       <section
         v-for="section in store.sections"
@@ -11,7 +21,6 @@
       >
         <ElementRenderer :section="section" />
 
-        <!-- Resize handle: chỉ hiện khi section active -->
         <div
           v-if="store.activeSectionId === section.id"
           class="section-resize-handle"
