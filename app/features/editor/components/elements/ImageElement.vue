@@ -106,7 +106,7 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted, watch, inject, useAttrs } from "vue";
 import { useEditorStore } from "../../store/editorStore";
-import { createMoveCommand } from "../../core/commands/moveElement";
+import { createGroupMoveCommand } from "../../core/commands/moveGroupElement";
 import { createResizeCommand } from "../../core/commands/resizeImage";
 import { createRotateCommand } from "../../core/commands/rotateElement";
 import { calcSnapWithContainer } from '../../core/snapEngine'
@@ -162,22 +162,36 @@ const imageStyle = computed(() => ({
 // ===== drag =====
 let startX = 0;
 let startY = 0;
-let initialX = 0;
-let initialY = 0;
+let initialPositions: Record<string, { x: number; y: number }> = {};
 
 const onMouseDown = (e: MouseEvent) => {
   if (e.button !== 0) return;
 
   const isMulti = e.shiftKey;
-  store.select(props.element.id, isMulti);
+  const isAlreadySelected = store.selectedIds.includes(props.element.id);
+  const hasGroupSelection = store.selectedIds.length > 1;
+
+  if (isMulti) {
+    store.select(props.element.id, true);
+    return;
+  } else if (!isAlreadySelected || !hasGroupSelection) {
+    store.select(props.element.id, false);
+  }
+
+  if (!store.selectedIds.includes(props.element.id)) return;
+
   startDrag(e);
 };
 
 const startDrag = (e: MouseEvent) => {
   e.preventDefault();
 
-  initialX = props.element.x;
-  initialY = props.element.y;
+  initialPositions = {};
+  store.selectedIds.forEach((id) => {
+    const el = store.findElementById(id);
+    if (el) initialPositions[id] = { x: el.x, y: el.y };
+  });
+
   startX = e.clientX;
   startY = e.clientY;
 
@@ -189,11 +203,14 @@ const startDrag = (e: MouseEvent) => {
 const onDrag = (e: MouseEvent) => {
   const dx = e.clientX - startX;
   const dy = e.clientY - startY;
-  const rawX = initialX + dx
-  const rawY = initialY + dy
+  const leadInitialPosition = initialPositions[props.element.id]
+  if (!leadInitialPosition) return
+
+  const rawX = leadInitialPosition.x + dx
+  const rawY = leadInitialPosition.y + dy
 
   const others = store.activeSectionElements
-    .filter(el => el.id !== props.element.id)
+    .filter(el => !store.selectedIds.includes(el.id))
     .map(el => ({ x: el.x, y: el.y, width: el.width, height: el.height }))
 
   const container = getContainerRect?.() ?? {
@@ -206,25 +223,43 @@ const onDrag = (e: MouseEvent) => {
     container
   )
 
-  store.move(props.element.id, result.x, result.y)
-  // store.move(props.element.id, initialX + dx, initialY + dy);
+  const snapDx = result.x - rawX
+  const snapDy = result.y - rawY
+
+  store.selectedIds.forEach(id => {
+    const init = initialPositions[id]
+    if (!init) return
+    store.move(id, init.x + dx + snapDx, init.y + dy + snapDy)
+  })
+
   setSnapLines?.(result.lines)
 };
 
 const stopDrag = () => {
   setSnapLines?.([])
 
-  const el = store.findElementById(props.element.id);
-  if (el && (el.x !== initialX || el.y !== initialY)) {
-    store.executeCommand(
-      createMoveCommand(store, {
-        id: props.element.id,
-        oldX: initialX,
-        oldY: initialY,
-        newX: el.x,
-        newY: el.y,
-      })
+  const items = store.selectedIds
+    .map((id) => {
+      const el = store.findElementById(id);
+      const init = initialPositions[id];
+      if (!el || !init) return null;
+      return { id, oldX: init.x, oldY: init.y, newX: el.x, newY: el.y };
+    })
+    .filter(
+      (
+        item
+      ): item is {
+        id: string;
+        oldX: number;
+        oldY: number;
+        newX: number;
+        newY: number;
+      } => item !== null
     );
+
+  const hasChange = items.some((i) => i.oldX !== i.newX || i.oldY !== i.newY);
+  if (hasChange && items.length) {
+    store.executeCommand(createGroupMoveCommand(store, { items }));
   }
 
   document.body.style.userSelect = "";

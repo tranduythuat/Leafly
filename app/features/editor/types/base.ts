@@ -17,6 +17,7 @@ export interface BaseElement extends Position, Size {
   id: ID
   zIndex: number
   rotation?: number
+  groupId?: string
 }
 
 export interface TextElement extends BaseElement {

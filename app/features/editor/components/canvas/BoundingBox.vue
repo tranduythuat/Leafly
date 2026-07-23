@@ -48,8 +48,7 @@ const style = computed(() => ({
   width: box.value?.width + "px",
   height: box.value?.height + "px",
   border: "1px dashed #6f8560",
-  pointerEvents: "auto",
-  cursor: "move",
+  pointerEvents: "none",
   zIndex: 20,
 }));
 
