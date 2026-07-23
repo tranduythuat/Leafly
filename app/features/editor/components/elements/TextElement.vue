@@ -394,9 +394,12 @@ const onMouseDown = (e: MouseEvent) => {
 
   if (isMulti) {
     store.select(props.element.id, true);
+    return;
   } else if (!isAlreadySelected || !hasGroupSelection) {
     store.select(props.element.id, false);
   }
+
+  if (!store.selectedIds.includes(props.element.id)) return;
 
   startDrag(e);
 };
@@ -434,9 +437,11 @@ const onDrag = (e: MouseEvent) => {
   // Tính vị trí raw trước khi snap (chỉ element đang kéo)
   const leadEl = store.findElementById(props.element.id)
   if (!leadEl) return
+  const leadInitialPosition = initialPositions[props.element.id]
+  if (!leadInitialPosition) return
 
-  const rawX = initialPositions[props.element.id].x + dx
-  const rawY = initialPositions[props.element.id].y + dy
+  const rawX = leadInitialPosition.x + dx
+  const rawY = leadInitialPosition.y + dy
 
   // Lấy elements khác làm snap target
   const others = store.activeSectionElements

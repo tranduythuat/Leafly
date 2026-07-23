@@ -15,6 +15,9 @@ import { createInsertImageCommand } from "../core/commands/insertImageBlock"
 import { createDuplicateElementCommand } from "../core/commands/duplicateElement"
 import { createUpdateSectionStyleCommand } from "../core/commands/updateSectionStyle"
 import { createUpdateStyleCommand } from "../core/commands/updateStyle"
+import { createAlignCommand, computeAlignment } from "../core/commands/align"
+import { createGroupCommand } from "../core/commands/group"
+import type { AlignType } from "../types"
 
 let history = createHistory() 
 
@@ -340,17 +343,29 @@ export const useEditorStore = defineStore("editor", {
       const sameSectionSelectedIds = this.ui.selectedIds.filter(
         (selectedId) => this.findSectionByElementId(selectedId)?.id === section.id
       )
+      const element = section.elements.find((el) => el.id === id)
+      const groupIds = element?.groupId
+        ? section.elements
+            .filter((el) => el.groupId === element.groupId)
+            .map((el) => el.id)
+        : [id]
 
       this.ui.activeSectionId = section.id
 
       if (isMulti) {
-        if (sameSectionSelectedIds.includes(id)) {
-          this.ui.selectedIds = sameSectionSelectedIds.filter((item) => item !== id)
+        const isSelected = groupIds.every((groupId) =>
+          sameSectionSelectedIds.includes(groupId)
+        )
+
+        if (isSelected) {
+          this.ui.selectedIds = sameSectionSelectedIds.filter(
+            (item) => !groupIds.includes(item)
+          )
         } else {
-          this.ui.selectedIds = [...sameSectionSelectedIds, id]
+          this.ui.selectedIds = Array.from(new Set([...sameSectionSelectedIds, ...groupIds]))
         }
       } else {
-        this.ui.selectedIds = [id]
+        this.ui.selectedIds = groupIds
       }
     },
 
@@ -471,7 +486,67 @@ export const useEditorStore = defineStore("editor", {
     },
     setBackground(type: 'color' | 'image', value: string) {
       this.document.background = { type, value }
-    }
+    },
+
+    alignSelected(type: AlignType) {
+      const section = this.activeSection
+      if (!section) return
+
+      const selected = this.activeSectionSelectedElements
+      if (selected.length < 2) return
+
+      const items = selected.map((el) => ({
+        id: el.id,
+        x: el.x,
+        y: el.y,
+        width: el.width,
+        height: el.height,
+      }))
+
+      const aligned = computeAlignment(items, type)
+
+      if (!aligned.length) return
+      if (aligned.every((item) => item.oldX === item.newX && item.oldY === item.newY)) return
+
+      const command = createAlignCommand(this, { items: aligned })
+      this.executeCommand(command)
+    },
+
+    groupSelected() {
+      const section = this.activeSection
+      if (!section) return
+
+      const selected = this.activeSectionSelectedElements
+      if (selected.length < 2) return
+
+      const groupId = createSectionId()
+      const items = selected.map((el) => ({
+        id: el.id,
+        oldGroupId: el.groupId,
+        newGroupId: groupId,
+      }))
+
+      this.executeCommand(createGroupCommand(this, { items }))
+    },
+
+    ungroupSelected() {
+      const selected = this.activeSectionSelectedElements
+      if (selected.length === 0) return
+
+      const groupIds = new Set(selected.map((el) => el.groupId).filter(Boolean))
+
+      if (groupIds.size === 0) return
+
+      const items = this.allElements
+        .filter((el) => el.groupId && groupIds.has(el.groupId))
+        .map((el) => ({
+          id: el.id,
+          oldGroupId: el.groupId,
+          newGroupId: undefined,
+        }))
+
+      this.executeCommand(createGroupCommand(this, { items }))
+    },
   },
 });
 

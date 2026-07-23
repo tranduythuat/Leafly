@@ -4,7 +4,9 @@
     class="section-canvas"
     :style="sectionStyle"
     :data-section-id="section.id"
+    @click.stop
     @contextmenu.prevent="onContextMenu"
+    @mousedown.self="onCanvasMouseDown"
   >
     <div v-if="!sortedElements.length" class="section-canvas__empty">
       <strong>Empty section</strong>
@@ -50,11 +52,62 @@ import BoundingBox from "./BoundingBox.vue"
 import LayerPicker from "./LayerPicker.vue"
 import type { LayerPickerItem } from "./LayerPicker.vue"
 
+const emit = defineEmits<{
+  'marquee-start': [payload: { sectionId: string; x: number; y: number }]
+  'marquee-move': [payload: { x: number; y: number }]
+  'marquee-end': []
+}>()
+
 const props = defineProps<{
   section: Section
 }>()
 
 const store = useEditorStore()
+
+const emitMarquee = (type: 'start' | 'move' | 'end', payload?: { x: number; y: number }) => {
+  if (type === 'start' && payload) {
+    emit('marquee-start', { sectionId: props.section.id, x: payload.x, y: payload.y })
+  } else if (type === 'move' && payload) {
+    emit('marquee-move', { x: payload.x, y: payload.y })
+  } else if (type === 'end') {
+    emit('marquee-end')
+  }
+}
+
+let isMarqueeDragging = false
+let marqueeStartX = 0
+let marqueeStartY = 0
+
+const onCanvasMouseDown = (e: MouseEvent) => {
+  if (e.button !== 0) return
+  if ((e.target as HTMLElement).closest('.section-canvas__empty')) return
+
+  store.selectSection(props.section.id)
+
+  isMarqueeDragging = true
+  marqueeStartX = e.clientX
+  marqueeStartY = e.clientY
+
+  emitMarquee('start', { x: e.clientX, y: e.clientY })
+
+  window.addEventListener('mousemove', onCanvasMouseMove)
+  window.addEventListener('mouseup', onCanvasMouseUp)
+}
+
+const onCanvasMouseMove = (e: MouseEvent) => {
+  if (!isMarqueeDragging) return
+  emitMarquee('move', { x: e.clientX, y: e.clientY })
+}
+
+const onCanvasMouseUp = (e: MouseEvent) => {
+  if (!isMarqueeDragging) return
+  isMarqueeDragging = false
+
+  window.removeEventListener('mousemove', onCanvasMouseMove)
+  window.removeEventListener('mouseup', onCanvasMouseUp)
+
+  emitMarquee('end')
+}
 
 const canvasRef = ref<HTMLElement | null>(null)
 const snapLines = ref<SnapLine[]>([])
@@ -218,7 +271,7 @@ const closePicker = () => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .section-canvas {
   width: min(100%, 720px);
   margin: 0 auto;
