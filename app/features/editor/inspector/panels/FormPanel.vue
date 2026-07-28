@@ -96,6 +96,59 @@
 
         <!-- Pill customization: radius + layout -->
         <div v-if="field.displayStyle === 'pill'" class="fp-pill-config">
+          <!-- Question label -->
+          <div class="fp-pill-question">
+            <span class="fp-style-label">Question text</span>
+            <input
+              :value="field.pillQuestion"
+              class="fp-option-input"
+              placeholder="Quý khách có yêu cầu đặc biệt về thức ăn không?"
+              @input="
+                field.pillQuestion = ($event.target as HTMLInputElement).value;
+                sync();
+              "
+            />
+            <div class="fp-style-btns">
+              <button
+                class="fp-style-btn fp-style-btn--sm"
+                :class="{
+                  'fp-style-btn--active':
+                    (field.pillQuestionAlign ?? 'center') === 'left',
+                }"
+                @click="
+                  field.pillQuestionAlign = 'left';
+                  sync();
+                "
+              >
+                Left
+              </button>
+              <button
+                class="fp-style-btn fp-style-btn--sm"
+                :class="{
+                  'fp-style-btn--active':
+                    (field.pillQuestionAlign ?? 'center') === 'center',
+                }"
+                @click="
+                  field.pillQuestionAlign = 'center';
+                  sync();
+                "
+              >
+                Center
+              </button>
+              <button
+                class="fp-style-btn fp-style-btn--sm"
+                :class="{
+                  'fp-style-btn--active': field.pillQuestionAlign === 'right',
+                }"
+                @click="
+                  field.pillQuestionAlign = 'right';
+                  sync();
+                "
+              >
+                Right
+              </button>
+            </div>
+          </div>
           <div class="fp-pill-radius">
             <span class="fp-style-label">Radius</span>
             <input
@@ -426,6 +479,19 @@
       "
     />
     <InsField
+      type="range"
+      label="Field spacing"
+      :model-value="local.fieldGap"
+      :min="4"
+      :max="48"
+      :step="2"
+      suffix="px"
+      @update:model-value="
+        local.fieldGap = $event;
+        sync();
+      "
+    />
+    <InsField
       type="toggle"
       label="Show field labels"
       :model-value="local.showLabels"
@@ -480,6 +546,8 @@ type Field = {
   pillWidth?: number | "auto";
   pillHeight?: number;
   pillAlign?: "left" | "center" | "right" | "between";
+  pillQuestion?: string;
+  pillQuestionAlign?: "left" | "center" | "right";
 };
 
 const OPTION_TYPES = ["select", "radio", "checkbox"];
@@ -494,13 +562,14 @@ const optionBullet = (type: string) => {
 const local = reactive({
   fields: [] as Field[],
   submitLabel: "Send RSVP",
-  submitColor: "#6B8C6E",
+  submitColor: "#B5694A",
   action: "rsvp",
   actionEmail: "",
   actionUrl: "",
   bgColor: "#ffffff",
   borderRadius: 8,
   showLabels: true,
+  fieldGap: 10,
 });
 
 watch(
@@ -512,13 +581,14 @@ watch(
       { id: uid(), type: "email", label: "Email", required: true },
     ];
     local.submitLabel = el.submitLabel ?? "Send RSVP";
-    local.submitColor = el.submitColor ?? "#6B8C6E";
+    local.submitColor = el.submitColor ?? "#B5694A";
     local.action = el.action ?? "rsvp";
     local.actionEmail = el.actionEmail ?? "";
     local.actionUrl = el.actionUrl ?? "";
     local.bgColor = el.bgColor ?? "#ffffff";
     local.borderRadius = el.borderRadius ?? 8;
     local.showLabels = el.showLabels ?? true;
+    local.fieldGap = el.fieldGap ?? 10;
   },
   { immediate: true }
 );
@@ -848,6 +918,14 @@ const sync = () => {
   gap: 6px;
   padding: 6px 4px 2px;
   border-top: 1px dashed $cream-dark;
+}
+
+.fp-pill-question {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed $cream-dark;
 }
 
 .fp-pill-radius {
