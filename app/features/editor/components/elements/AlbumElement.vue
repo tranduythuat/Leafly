@@ -13,9 +13,9 @@
     />
 
     <div class="album-el" :style="innerStyle">
-      <!-- Grid / Masonry / Strip: giữ nguyên CSS grid -->
+      <!-- Grid: lưới đều, ô vuông -->
       <div
-        v-if="element.layout !== 'carousel' && element.images.length !== 0"
+        v-if="element.layout === 'grid' && element.images.length"
         class="album-el__grid"
         :style="{
           gridTemplateColumns: `repeat(${element.columns}, 1fr)`,
@@ -34,8 +34,46 @@
         />
       </div>
 
+      <!-- Masonry: cột báo chí, giữ tỉ lệ ảnh gốc -->
+      <div
+        v-else-if="element.layout === 'masonry' && element.images.length"
+        class="album-el__masonry"
+        :style="{ columnCount: element.columns, columnGap: element.gap + 'px' }"
+      >
+        <img
+          v-for="img in element.images"
+          :key="img.id"
+          :src="img.src"
+          :style="{
+            borderRadius: element.itemRadius + 'px',
+            objectFit: element.objectFit,
+            marginBottom: element.gap + 'px',
+          }"
+        />
+      </div>
+
+      <!-- Strip: 1 hàng ngang, cuộn ngang -->
+      <div
+        v-else-if="element.layout === 'strip' && element.images.length"
+        class="album-el__strip"
+        :style="{ gap: element.gap + 'px' }"
+      >
+        <img
+          v-for="img in element.images"
+          :key="img.id"
+          :src="img.src"
+          :style="{
+            borderRadius: element.itemRadius + 'px',
+            objectFit: element.objectFit,
+            height: element.rowHeight + 'px',
+          }"
+        />
+      </div>
+
       <!-- Carousel: Swiper -->
-      <ClientOnly v-else-if="element.images.length">
+      <ClientOnly
+        v-else-if="element.layout === 'carousel' && element.images.length"
+      >
         <Swiper
           class="album-el__swiper"
           :modules="swiperModules"
@@ -56,7 +94,7 @@
         </Swiper>
       </ClientOnly>
 
-      <div v-else-if="!element.images.length" class="album-el__empty">
+      <div v-if="!element.images.length" class="album-el__empty">
         No photos yet
       </div>
     </div>
@@ -154,6 +192,34 @@ const innerStyle = computed(() => ({
     }
   }
 
+  &__masonry {
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+
+    img {
+      width: 100%;
+      display: block;
+      break-inside: avoid;
+    }
+  }
+
+  &__strip {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    align-items: center;
+
+    img {
+      flex-shrink: 0;
+      width: auto;
+      display: block;
+    }
+  }
+
   &__swiper {
     width: 100%;
     height: 100%;
@@ -170,7 +236,6 @@ const innerStyle = computed(() => ({
       display: block;
     }
 
-    // Ẩn con trỏ move của canvas trên vùng pagination để không nhầm là kéo block
     :deep(.swiper-pagination-bullet) {
       pointer-events: none;
     }
