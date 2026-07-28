@@ -10,7 +10,10 @@
   >
     <div v-if="!sortedElements.length" class="section-canvas__empty">
       <strong>Empty section</strong>
-      <p>Add a text or image block from the left panel to start composing this section.</p>
+      <p>
+        Add a text or image block from the left panel to start composing this
+        section.
+      </p>
     </div>
 
     <component
@@ -18,7 +21,10 @@
       :key="el.id"
       :is="resolveComponent(el)"
       :element="el"
-      :class="{ 'el--picker-hover': el.id === pickerHoveredId && pickerHoveredId !== null }"
+      :class="{
+        'el--picker-hover':
+          el.id === pickerHoveredId && pickerHoveredId !== null,
+      }"
     />
 
     <BoundingBox v-if="isActiveSection" :section-id="section.id" />
@@ -41,110 +47,123 @@
 
 <script setup lang="ts">
 import { computed, provide, ref } from "vue";
-import type { EditorElement, Section } from "../../types"
-import { useEditorStore } from "../../store/editorStore"
-import type { SnapLine } from '../../core/snapEngine'
-import type { ContainerRect } from '../../core/snapEngine'
-import GuideLines from './GuideLines.vue'
-import TextElement from '../elements/TextElement.vue'
-import ImageElement from '../elements/ImageElement.vue'
-import BoundingBox from "./BoundingBox.vue"
-import LayerPicker from "./LayerPicker.vue"
-import type { LayerPickerItem } from "./LayerPicker.vue"
+import type { EditorElement, Section } from "../../types";
+import { useEditorStore } from "../../store/editorStore";
+import type { SnapLine } from "../../core/snapEngine";
+import type { ContainerRect } from "../../core/snapEngine";
+import GuideLines from "./GuideLines.vue";
+import TextElement from "../elements/TextElement.vue";
+import ImageElement from "../elements/ImageElement.vue";
+import FormElement from "../elements/FormElement.vue";
+import MapElement from "../elements/MapElement.vue";
+import AlbumElement from "../elements/AlbumElement.vue";
+import BoundingBox from "./BoundingBox.vue";
+import LayerPicker from "./LayerPicker.vue";
+import type { LayerPickerItem } from "./LayerPicker.vue";
 
 const emit = defineEmits<{
-  'marquee-start': [payload: { sectionId: string; x: number; y: number }]
-  'marquee-move': [payload: { x: number; y: number }]
-  'marquee-end': []
-}>()
+  "marquee-start": [payload: { sectionId: string; x: number; y: number }];
+  "marquee-move": [payload: { x: number; y: number }];
+  "marquee-end": [];
+}>();
 
 const props = defineProps<{
-  section: Section
-}>()
+  section: Section;
+}>();
 
-const store = useEditorStore()
+const store = useEditorStore();
 
-const emitMarquee = (type: 'start' | 'move' | 'end', payload?: { x: number; y: number }) => {
-  if (type === 'start' && payload) {
-    emit('marquee-start', { sectionId: props.section.id, x: payload.x, y: payload.y })
-  } else if (type === 'move' && payload) {
-    emit('marquee-move', { x: payload.x, y: payload.y })
-  } else if (type === 'end') {
-    emit('marquee-end')
+const emitMarquee = (
+  type: "start" | "move" | "end",
+  payload?: { x: number; y: number }
+) => {
+  if (type === "start" && payload) {
+    emit("marquee-start", {
+      sectionId: props.section.id,
+      x: payload.x,
+      y: payload.y,
+    });
+  } else if (type === "move" && payload) {
+    emit("marquee-move", { x: payload.x, y: payload.y });
+  } else if (type === "end") {
+    emit("marquee-end");
   }
-}
+};
 
-let isMarqueeDragging = false
-let marqueeStartX = 0
-let marqueeStartY = 0
+let isMarqueeDragging = false;
+let marqueeStartX = 0;
+let marqueeStartY = 0;
 
 const onCanvasMouseDown = (e: MouseEvent) => {
-  if (e.button !== 0) return
-  if ((e.target as HTMLElement).closest('.section-canvas__empty')) return
+  if (e.button !== 0) return;
+  if ((e.target as HTMLElement).closest(".section-canvas__empty")) return;
 
-  store.selectSection(props.section.id)
+  store.selectSection(props.section.id);
 
-  isMarqueeDragging = true
-  marqueeStartX = e.clientX
-  marqueeStartY = e.clientY
+  isMarqueeDragging = true;
+  marqueeStartX = e.clientX;
+  marqueeStartY = e.clientY;
 
-  emitMarquee('start', { x: e.clientX, y: e.clientY })
+  emitMarquee("start", { x: e.clientX, y: e.clientY });
 
-  window.addEventListener('mousemove', onCanvasMouseMove)
-  window.addEventListener('mouseup', onCanvasMouseUp)
-}
+  window.addEventListener("mousemove", onCanvasMouseMove);
+  window.addEventListener("mouseup", onCanvasMouseUp);
+};
 
 const onCanvasMouseMove = (e: MouseEvent) => {
-  if (!isMarqueeDragging) return
-  emitMarquee('move', { x: e.clientX, y: e.clientY })
-}
+  if (!isMarqueeDragging) return;
+  emitMarquee("move", { x: e.clientX, y: e.clientY });
+};
 
 const onCanvasMouseUp = (e: MouseEvent) => {
-  if (!isMarqueeDragging) return
-  isMarqueeDragging = false
+  if (!isMarqueeDragging) return;
+  isMarqueeDragging = false;
 
-  window.removeEventListener('mousemove', onCanvasMouseMove)
-  window.removeEventListener('mouseup', onCanvasMouseUp)
+  window.removeEventListener("mousemove", onCanvasMouseMove);
+  window.removeEventListener("mouseup", onCanvasMouseUp);
 
-  emitMarquee('end')
-}
+  emitMarquee("end");
+};
 
-const canvasRef = ref<HTMLElement | null>(null)
-const snapLines = ref<SnapLine[]>([])
+const canvasRef = ref<HTMLElement | null>(null);
+const snapLines = ref<SnapLine[]>([]);
 
-provide('setSnapLines', (lines: SnapLine[]) => {
-  snapLines.value = lines
-})
+provide("setSnapLines", (lines: SnapLine[]) => {
+  snapLines.value = lines;
+});
 
 const getContainerRect = (): ContainerRect => {
-  const el = canvasRef.value
+  const el = canvasRef.value;
   if (!el) {
     return {
-      x: 0, y: 0,
+      x: 0,
+      y: 0,
       width: props.section.style.minHeight,
       height: props.section.style.minHeight,
       paddingX: props.section.style.padding,
       paddingY: props.section.style.padding,
-    }
+    };
   }
 
   return {
     x: 0,
     y: 0,
-    width:  el.clientWidth,
+    width: el.clientWidth,
     height: el.clientHeight,
     paddingX: props.section.style.padding,
     paddingY: props.section.style.padding,
-  }
-}
+  };
+};
 
-provide('getContainerRect', getContainerRect)
+provide("getContainerRect", getContainerRect);
 
 const sortedElements = computed(() =>
   [...props.section.elements].sort((a, b) => a.zIndex - b.zIndex)
-)
+);
 
-const isActiveSection = computed(() => store.activeSectionId === props.section.id)
+const isActiveSection = computed(
+  () => store.activeSectionId === props.section.id
+);
 
 const sectionStyle = computed(() => ({
   position: "relative",
@@ -160,23 +179,26 @@ const sectionStyle = computed(() => ({
       : undefined,
   backgroundSize: "cover",
   backgroundPosition: "center",
-}))
+}));
 
 const resolveComponent = (el: EditorElement) => {
-  if (el.type === 'text') return TextElement
-  if (el.type === 'image') return ImageElement
-  return TextElement
-}
+  if (el.type === "text") return TextElement;
+  if (el.type === "image") return ImageElement;
+  if (el.type === "form") return FormElement;
+  if (el.type === "map") return MapElement;
+  if (el.type === "album") return AlbumElement;
+  return TextElement;
+};
 
 // =====================
 // LAYER PICKER
 // =====================
 
-const pickerVisible = ref(false)
-const pickerX = ref(0)
-const pickerY = ref(0)
-const pickerItems = ref<LayerPickerItem[]>([])
-const pickerHoveredId = ref<string | null>(null)
+const pickerVisible = ref(false);
+const pickerX = ref(0);
+const pickerY = ref(0);
+const pickerItems = ref<LayerPickerItem[]>([]);
+const pickerHoveredId = ref<string | null>(null);
 
 /**
  * Tìm tất cả elements chứa điểm (px, py) trong hệ toạ độ section.
@@ -184,91 +206,118 @@ const pickerHoveredId = ref<string | null>(null)
  */
 const getElementsAtPoint = (px: number, py: number): EditorElement[] => {
   return props.section.elements
-    .filter(el => {
+    .filter((el) => {
       return (
         px >= el.x &&
         px <= el.x + el.width &&
         py >= el.y &&
         py <= el.y + el.height
-      )
+      );
     })
-    .sort((a, b) => b.zIndex - a.zIndex)
-}
+    .sort((a, b) => b.zIndex - a.zIndex);
+};
 
 const buildPickerItems = (elements: EditorElement[]): LayerPickerItem[] => {
-  return elements.map(el => {
-    if (el.type === 'text') {
-      const preview = el.content?.slice(0, 20) ?? 'Text'
+  return elements.map((el) => {
+    if (el.type === "text") {
+      const preview = el.content?.slice(0, 20) ?? "Text";
       return {
         id: el.id,
-        type: 'text',
-        label: preview + (el.content?.length > 20 ? '…' : ''),
+        type: "text",
+        label: preview + (el.content?.length > 20 ? "…" : ""),
         zIndex: el.zIndex,
-        color: el.color ?? '#36402d',
-      }
+        color: el.color ?? "#36402d",
+      };
     }
 
-    if (el.type === 'image') {
+    if (el.type === "image") {
       return {
         id: el.id,
-        type: 'image',
-        label: 'Image',
+        type: "image",
+        label: "Image",
         zIndex: el.zIndex,
         src: el.src,
-      }
+      };
+    }
+
+    if (el.type === "form") {
+      return {
+        id: el.id,
+        type: "form",
+        label: "Form",
+        zIndex: el.zIndex,
+      };
+    }
+
+    if (el.type === "map") {
+      return {
+        id: el.id,
+        type: "map",
+        label: el.markerTitle || "Map",
+        zIndex: el.zIndex,
+      };
+    }
+
+    if (el.type === "album") {
+      return {
+        id: el.id,
+        type: "album",
+        label: `Album (${el.images.length})`,
+        zIndex: el.zIndex,
+      };
     }
 
     return {
       id: el.id,
       type: el.type,
-      label: 'Element',
+      label: "Element",
       zIndex: el.zIndex,
-    }
-  })
-}
+    };
+  });
+};
 
 const onContextMenu = (e: MouseEvent) => {
   // Chuyển toạ độ chuột sang hệ toạ độ section (relative)
-  const canvas = canvasRef.value
-  if (!canvas) return
+  const canvas = canvasRef.value;
+  if (!canvas) return;
 
-  const rect = canvas.getBoundingClientRect()
-  const px = e.clientX - rect.left
-  const py = e.clientY - rect.top
+  const rect = canvas.getBoundingClientRect();
+  const px = e.clientX - rect.left;
+  const py = e.clientY - rect.top;
 
-  const hits = getElementsAtPoint(px, py)
+  const hits = getElementsAtPoint(px, py);
 
   // Không có element nào → để browser context menu mặc định (hoặc bỏ qua)
-  if (hits.length === 0) return
+  if (hits.length === 0) return;
 
   // Chỉ 1 element → select thẳng, không cần menu
   if (hits.length === 1) {
-    store.select(hits[0].id, false)
-    return
+    store.select(hits[0].id, false);
+    return;
   }
 
   // Nhiều element → hiện picker
-  store.selectSection(props.section.id)
+  store.selectSection(props.section.id);
 
-  pickerItems.value = buildPickerItems(hits)
-  pickerX.value = e.clientX
-  pickerY.value = e.clientY
-  pickerVisible.value = true
-}
+  pickerItems.value = buildPickerItems(hits);
+  pickerX.value = e.clientX;
+  pickerY.value = e.clientY;
+  pickerVisible.value = true;
+};
 
 const onPickerSelect = (id: string) => {
-  store.select(id, false)
-  pickerHoveredId.value = null
-}
+  store.select(id, false);
+  pickerHoveredId.value = null;
+};
 
 const onPickerHover = (id: string | null) => {
-  pickerHoveredId.value = id
-}
+  pickerHoveredId.value = id;
+};
 
 const closePicker = () => {
-  pickerVisible.value = false
-  pickerHoveredId.value = null
-}
+  pickerVisible.value = false;
+  pickerHoveredId.value = null;
+};
 </script>
 
 <style scoped lang="scss">
@@ -306,10 +355,10 @@ const closePicker = () => {
 <!-- Global: highlight khi hover từ picker -->
 <style>
 .el--picker-hover {
-  outline: 2px solid #E040FB !important;
+  outline: 2px solid #e040fb !important;
   outline-offset: 2px;
   border-radius: 4px;
-  transition: outline .08s;
+  transition: outline 0.08s;
   z-index: 50 !important;
 }
 </style>

@@ -19,25 +19,26 @@
 </template>
 
 <script setup>
-import { ref } from "vue"
-import EditorSidebarPanel from "./EditorSidebarPanel.vue"
-import { Type, Image, Music } from '@lucide/vue';
+import { ref } from "vue";
+import EditorSidebarPanel from "./EditorSidebarPanel.vue";
+import { Type, Image, LayoutGrid, Music } from "@lucide/vue";
 
-const active = ref("text")
+const active = ref("text");
 
 const tabs = [
-  { 
-    key: "text", 
-    label: "Text", 
-    icon: Type
+  {
+    key: "text",
+    label: "Text",
+    icon: Type,
   },
   { key: "image", label: "Images", icon: Image },
-  { key: "music", label: "Music", icon: Music }
-]
+  { key: "blocks", label: "Blocks", icon: LayoutGrid },
+  { key: "music", label: "Music", icon: Music },
+];
 </script>
 
 <style lang="scss" scoped>
-  .h-full {
-    width: 380px;
-  }
+.h-full {
+  width: 380px;
+}
 </style>
