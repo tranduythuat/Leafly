@@ -42,6 +42,13 @@ export interface ImageElement extends BaseElement {
 }
 
 // ---- Form -----
+
+export interface FormFieldOption {
+  id: string;
+  label: string; // dòng chính, in hoa (VD: "YES")
+  subLabel?: string; // dòng phụ, nhỏ hơn (VD: "/CÓ/")
+}
+
 export interface FormField {
   id: string;
   type:
@@ -55,6 +62,13 @@ export interface FormField {
     | "number";
   label: string;
   required: boolean;
+  options?: FormFieldOption[];
+  displayStyle?: "default" | "pill";
+  pillRadius?: number; // border-radius riêng cho pill, px
+  pillLayout?: "row" | "column" | "grid2"; // bố cục: ngang / dọc / lưới 2 cột
+  pillWidth?: number | "auto"; // px cố định, hoặc 'auto' theo nội dung
+  pillHeight?: number; // px
+  pillAlign?: "left" | "center" | "right" | "between"; // căn nhóm pill trong field
 }
 
 export interface FormElement extends BaseElement {
