@@ -69,6 +69,8 @@ export interface FormField {
   pillWidth?: number | "auto"; // px cố định, hoặc 'auto' theo nội dung
   pillHeight?: number; // px
   pillAlign?: "left" | "center" | "right" | "between"; // căn nhóm pill trong field
+  pillQuestion?: string; // câu hỏi hiển thị phía trên pill group
+  pillQuestionAlign?: "left" | "center" | "right";
 }
 
 export interface FormElement extends BaseElement {
@@ -82,6 +84,7 @@ export interface FormElement extends BaseElement {
   bgColor: string;
   borderRadius: number;
   showLabels: boolean;
+  fieldGap?: number;
 }
 
 export interface MapElement extends BaseElement {

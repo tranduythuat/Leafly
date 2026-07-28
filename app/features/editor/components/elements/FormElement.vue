@@ -18,7 +18,13 @@
         :key="field.id"
         class="form-el__field"
       >
-        <label v-if="element.showLabels" class="form-el__label">
+        <label
+          v-if="
+            element.showLabels &&
+            !(field.displayStyle === 'pill' && field.pillQuestion)
+          "
+          class="form-el__label"
+        >
           {{ field.label }}<span v-if="field.required"> *</span>
         </label>
 
@@ -40,25 +46,35 @@
         </select>
 
         <!-- Radio: pill style -->
-        <div
+        <template
           v-else-if="field.type === 'radio' && field.displayStyle === 'pill'"
-          class="form-el__pill-group"
-          :class="`form-el__pill-group--${field.pillLayout ?? 'row'}`"
-          :style="pillGroupJustify(field)"
         >
-          <div
-            v-for="(opt, i) in field.options"
-            :key="opt.id"
-            class="form-el__pill"
-            :class="{ 'form-el__pill--active': i === 0 }"
-            :style="pillItemStyle(field)"
+          <p
+            v-if="field.pillQuestion"
+            class="form-el__pill-question"
+            :style="{ textAlign: field.pillQuestionAlign ?? 'center' }"
           >
-            <span class="form-el__pill-main">{{ opt.label }}</span>
-            <span v-if="opt.subLabel" class="form-el__pill-sub">{{
-              opt.subLabel
-            }}</span>
+            {{ field.pillQuestion }}
+          </p>
+          <div
+            class="form-el__pill-group"
+            :class="`form-el__pill-group--${field.pillLayout ?? 'row'}`"
+            :style="pillGroupJustify(field)"
+          >
+            <div
+              v-for="(opt, i) in field.options"
+              :key="opt.id"
+              class="form-el__pill"
+              :class="{ 'form-el__pill--active': i === 0 }"
+              :style="pillItemStyle(field)"
+            >
+              <span class="form-el__pill-main">{{ opt.label }}</span>
+              <span v-if="opt.subLabel" class="form-el__pill-sub">{{
+                opt.subLabel
+              }}</span>
+            </div>
           </div>
-        </div>
+        </template>
 
         <!-- Radio: default list style -->
         <div v-else-if="field.type === 'radio'" class="form-el__options">
@@ -73,24 +89,34 @@
         </div>
 
         <!-- Checkbox: pill style -->
-        <div
+        <template
           v-else-if="field.type === 'checkbox' && field.displayStyle === 'pill'"
-          class="form-el__pill-group"
-          :class="`form-el__pill-group--${field.pillLayout ?? 'row'}`"
-          :style="pillGroupJustify(field)"
         >
-          <div
-            v-for="opt in field.options"
-            :key="opt.id"
-            class="form-el__pill"
-            :style="pillItemStyle(field)"
+          <p
+            v-if="field.pillQuestion"
+            class="form-el__pill-question"
+            :style="{ textAlign: field.pillQuestionAlign ?? 'center' }"
           >
-            <span class="form-el__pill-main">{{ opt.label }}</span>
-            <span v-if="opt.subLabel" class="form-el__pill-sub">{{
-              opt.subLabel
-            }}</span>
+            {{ field.pillQuestion }}
+          </p>
+          <div
+            class="form-el__pill-group"
+            :class="`form-el__pill-group--${field.pillLayout ?? 'row'}`"
+            :style="pillGroupJustify(field)"
+          >
+            <div
+              v-for="opt in field.options"
+              :key="opt.id"
+              class="form-el__pill"
+              :style="pillItemStyle(field)"
+            >
+              <span class="form-el__pill-main">{{ opt.label }}</span>
+              <span v-if="opt.subLabel" class="form-el__pill-sub">{{
+                opt.subLabel
+              }}</span>
+            </div>
           </div>
-        </div>
+        </template>
 
         <!-- Checkbox: default list style -->
         <div v-else-if="field.type === 'checkbox'" class="form-el__options">
@@ -194,6 +220,7 @@ const formStyle = computed(() => ({
   padding: "16px",
   boxSizing: "border-box",
   pointerEvents: "none", // canvas: preview-only, không nhập liệu được khi đang edit
+  gap: `${props.element.fieldGap ?? 10}px`,
 }));
 
 const pillGroupJustify = (field: FormField) => {
@@ -225,7 +252,6 @@ const pillItemStyle = (field: FormField) => {
 .form-el {
   display: flex;
   flex-direction: column;
-  gap: 10px;
 
   &__field {
     display: flex;
@@ -324,18 +350,27 @@ const pillItemStyle = (field: FormField) => {
     justify-content: center;
     gap: 1px;
     padding: 10px 22px;
-    border: 1.5px solid $terracotta;
+    border: 1.5px solid $olive;
     background: $white;
-    color: $terracotta;
+    color: $olive;
     min-width: 90px;
     text-align: center;
     box-sizing: border-box;
 
     &--active {
-      background: $terracotta;
-      border-color: $terracotta;
+      background: $sage-dark;
+      border-color: $sage-dark;
       color: $white;
     }
+  }
+
+  &__pill-question {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: $text-dark;
+    margin: 0 0 10px;
   }
 
   &__pill-main {

@@ -376,7 +376,7 @@ export const useEditorStore = defineStore("editor", {
           },
         ],
         submitLabel: "Send RSVP",
-        submitColor: "#6B8C6E",
+        submitColor: "#B5694A",
         action: "rsvp",
         bgColor: "#ffffff",
         borderRadius: 8,
