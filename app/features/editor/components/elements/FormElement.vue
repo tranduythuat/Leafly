@@ -21,18 +21,89 @@
         <label v-if="element.showLabels" class="form-el__label">
           {{ field.label }}<span v-if="field.required"> *</span>
         </label>
+
         <textarea
           v-if="field.type === 'textarea'"
           class="form-el__input form-el__input--area"
           disabled
         />
+
         <select
           v-else-if="field.type === 'select'"
           class="form-el__input"
           disabled
         >
-          <option>{{ field.label }}</option>
+          <option v-if="!field.options?.length">{{ field.label }}</option>
+          <option v-for="opt in field.options" :key="opt.id">
+            {{ opt.label }}
+          </option>
         </select>
+
+        <!-- Radio: pill style -->
+        <div
+          v-else-if="field.type === 'radio' && field.displayStyle === 'pill'"
+          class="form-el__pill-group"
+          :class="`form-el__pill-group--${field.pillLayout ?? 'row'}`"
+          :style="pillGroupJustify(field)"
+        >
+          <div
+            v-for="(opt, i) in field.options"
+            :key="opt.id"
+            class="form-el__pill"
+            :class="{ 'form-el__pill--active': i === 0 }"
+            :style="pillItemStyle(field)"
+          >
+            <span class="form-el__pill-main">{{ opt.label }}</span>
+            <span v-if="opt.subLabel" class="form-el__pill-sub">{{
+              opt.subLabel
+            }}</span>
+          </div>
+        </div>
+
+        <!-- Radio: default list style -->
+        <div v-else-if="field.type === 'radio'" class="form-el__options">
+          <label
+            v-for="opt in field.options"
+            :key="opt.id"
+            class="form-el__option"
+          >
+            <input type="radio" :name="field.id" disabled />
+            <span>{{ opt.label }}</span>
+          </label>
+        </div>
+
+        <!-- Checkbox: pill style -->
+        <div
+          v-else-if="field.type === 'checkbox' && field.displayStyle === 'pill'"
+          class="form-el__pill-group"
+          :class="`form-el__pill-group--${field.pillLayout ?? 'row'}`"
+          :style="pillGroupJustify(field)"
+        >
+          <div
+            v-for="opt in field.options"
+            :key="opt.id"
+            class="form-el__pill"
+            :style="pillItemStyle(field)"
+          >
+            <span class="form-el__pill-main">{{ opt.label }}</span>
+            <span v-if="opt.subLabel" class="form-el__pill-sub">{{
+              opt.subLabel
+            }}</span>
+          </div>
+        </div>
+
+        <!-- Checkbox: default list style -->
+        <div v-else-if="field.type === 'checkbox'" class="form-el__options">
+          <label
+            v-for="opt in field.options"
+            :key="opt.id"
+            class="form-el__option"
+          >
+            <input type="checkbox" disabled />
+            <span>{{ opt.label }}</span>
+          </label>
+        </div>
+
         <input
           v-else
           class="form-el__input"
@@ -41,6 +112,7 @@
           :placeholder="field.label"
         />
       </div>
+
       <button
         class="form-el__submit"
         :style="{ background: element.submitColor }"
@@ -78,7 +150,7 @@ import { computed, ref, inject } from "vue";
 import { useEditorStore } from "../../store/editorStore";
 import { useDragResize } from "../../composables/useDragResize";
 import type { ContainerRect, SnapLine } from "../../core/snapEngine";
-import type { FormElement as FormElementType } from "../../types";
+import type { FormElement as FormElementType, FormField } from "../../types";
 import ElementToolbar from "./ElementToolbar.vue";
 
 const props = defineProps<{ element: FormElementType }>();
@@ -123,6 +195,30 @@ const formStyle = computed(() => ({
   boxSizing: "border-box",
   pointerEvents: "none", // canvas: preview-only, không nhập liệu được khi đang edit
 }));
+
+const pillGroupJustify = (field: FormField) => {
+  if ((field.pillLayout ?? "row") === "grid2") return {};
+
+  const align = field.pillAlign ?? "left";
+  const map: Record<string, string> = {
+    left: "flex-start",
+    center: "center",
+    right: "flex-end",
+    between: "space-between",
+  };
+
+  return { justifyContent: map[align] ?? "flex-start" };
+};
+
+const pillItemStyle = (field: FormField) => {
+  const width = field.pillWidth ?? "auto";
+  return {
+    borderRadius: (field.pillRadius ?? 999) + "px",
+    width: width === "auto" ? undefined : width + "px",
+    minWidth: width === "auto" ? undefined : width + "px",
+    height: field.pillHeight ? field.pillHeight + "px" : undefined,
+  };
+};
 </script>
 
 <style scoped lang="scss">
@@ -158,6 +254,101 @@ const formStyle = computed(() => ({
     color: #fff;
     font-weight: 600;
     font-size: 13px;
+  }
+
+  &__options {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  &__option {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: $text-mid;
+
+    input {
+      pointer-events: none;
+    }
+  }
+
+  &__pill-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: $white;
+    color: $terracotta;
+    min-width: 90px; // fallback khi pillWidth = 'auto', style động sẽ override nếu có width cố định
+    text-align: center;
+    box-sizing: border-box;
+    flex-shrink: 0;
+
+    &--row {
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+
+    &--column {
+      flex-direction: column;
+      align-items: stretch;
+
+      .form-el__pill {
+        width: 100%;
+      }
+    }
+
+    &--grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      .form-el__pill {
+        width: 100%;
+        min-width: 0;
+      }
+    }
+
+    &--active {
+      background: $terracotta;
+      border-color: $terracotta;
+      color: $white;
+    }
+  }
+
+  &__pill {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    padding: 10px 22px;
+    border: 1.5px solid $terracotta;
+    background: $white;
+    color: $terracotta;
+    min-width: 90px;
+    text-align: center;
+    box-sizing: border-box;
+
+    &--active {
+      background: $terracotta;
+      border-color: $terracotta;
+      color: $white;
+    }
+  }
+
+  &__pill-main {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    // text-transform: uppercase;
+  }
+
+  &__pill-sub {
+    font-size: 9px;
+    opacity: 0.85;
+    font-style: italic;
   }
 }
 

@@ -4,50 +4,66 @@ import type { EditorElement } from "../../types";
 const cloneElement = (element: EditorElement): EditorElement =>
   JSON.parse(JSON.stringify(element));
 
+interface RemoveItemPayload {
+  sectionId: string;
+  elementId: string;
+}
+
+interface SectionSnapshot {
+  sectionId: string;
+  elements: EditorElement[];
+}
+
 export function createRemoveElementCommand(
   store: EditorStore,
   payload: {
-    sectionId: string;
-    elementId: string;
+    items: RemoveItemPayload[];
     prevSelectedIds: string[];
     prevActiveSectionId: string | null;
   }
 ) {
-  let removedElement: EditorElement | undefined;
-  let removedIndex: number | undefined;
+  let snapshots: SectionSnapshot[] = [];
 
   return {
     execute() {
-      const section = store.findSectionById(payload.sectionId);
-      if (!section) return;
+      const groupedItems = new Map<string, Set<string>>();
 
-      const index = section.elements.findIndex(
-        (el) => el.id === payload.elementId
+      payload.items.forEach(({ sectionId, elementId }) => {
+        if (!groupedItems.has(sectionId)) {
+          groupedItems.set(sectionId, new Set());
+        }
+        groupedItems.get(sectionId)?.add(elementId);
+      });
+
+      snapshots = Array.from(groupedItems.entries()).flatMap(
+        ([sectionId, elementIds]) => {
+          const section = store.findSectionById(sectionId);
+          if (!section) return [];
+
+          const beforeElements = section.elements.map(cloneElement);
+          section.elements = section.elements.filter(
+            (element) => !elementIds.has(element.id)
+          );
+
+          return [{ sectionId, elements: beforeElements }];
+        }
       );
-      if (index === -1) return;
-
-      const [element] = section.elements.splice(index, 1);
-      if (!element) return;
-
-      removedElement = cloneElement(element);
-      removedIndex = index;
 
       store.ui.selectedIds = store.ui.selectedIds.filter(
-        (selectedId) => selectedId !== payload.elementId
+        (selectedId) =>
+          !payload.items.some((item) => item.elementId === selectedId)
       );
-      store.ui.activeSectionId = payload.sectionId;
+      store.ui.activeSectionId = payload.prevActiveSectionId;
     },
 
     undo() {
-      const section = store.findSectionById(payload.sectionId);
-      if (!section || !removedElement) return;
+      snapshots.forEach(({ sectionId, elements }) => {
+        const section = store.findSectionById(sectionId);
+        if (!section) return;
 
-      const insertIndex =
-        removedIndex !== undefined
-          ? Math.min(removedIndex, section.elements.length)
-          : section.elements.length;
+        section.elements = elements.map(cloneElement);
+      });
 
-      section.elements.splice(insertIndex, 0, cloneElement(removedElement));
       store.ui.selectedIds = [...payload.prevSelectedIds];
       store.ui.activeSectionId = payload.prevActiveSectionId;
     },

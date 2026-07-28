@@ -537,18 +537,30 @@ export const useEditorStore = defineStore("editor", {
       if (fontSize !== undefined) el.fontSize = fontSize;
     },
 
-    removeElement(id: string) {
-      const section = this.findSectionByElementId(id);
-      if (!section) return;
+    removeElements(ids: string[]) {
+      const items = ids
+        .map((id) => {
+          const section = this.findSectionByElementId(id);
+          return section ? { sectionId: section.id, elementId: id } : null;
+        })
+        .filter(
+          (item): item is { sectionId: string; elementId: string } =>
+            item !== null
+        );
+
+      if (items.length === 0) return;
 
       const command = createRemoveElementCommand(this, {
-        sectionId: section.id,
-        elementId: id,
+        items,
         prevSelectedIds: [...this.ui.selectedIds],
         prevActiveSectionId: this.ui.activeSectionId,
       });
 
       this.executeCommand(command);
+    },
+
+    removeElement(id: string) {
+      this.removeElements([id]);
     },
 
     duplicateElement(id: string) {
