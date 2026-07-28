@@ -14,6 +14,7 @@ import { createInsertGenericCommand } from "../core/commands/insertGenericBlock"
 import { createInsertTextCommand } from "../core/commands/inserttextblock";
 import { createInsertImageCommand } from "../core/commands/insertImageBlock";
 import { createDuplicateElementCommand } from "../core/commands/duplicateElement";
+import { createRemoveElementCommand } from "../core/commands/removeElement";
 import { createUpdateSectionStyleCommand } from "../core/commands/updateSectionStyle";
 import { createUpdateStyleCommand } from "../core/commands/updateStyle";
 import { createAlignCommand, computeAlignment } from "../core/commands/align";
@@ -540,12 +541,14 @@ export const useEditorStore = defineStore("editor", {
       const section = this.findSectionByElementId(id);
       if (!section) return;
 
-      section.elements = section.elements.filter(
-        (element) => element.id !== id
-      );
-      this.ui.selectedIds = this.ui.selectedIds.filter(
-        (selectedId) => selectedId !== id
-      );
+      const command = createRemoveElementCommand(this, {
+        sectionId: section.id,
+        elementId: id,
+        prevSelectedIds: [...this.ui.selectedIds],
+        prevActiveSectionId: this.ui.activeSectionId,
+      });
+
+      this.executeCommand(command);
     },
 
     duplicateElement(id: string) {
