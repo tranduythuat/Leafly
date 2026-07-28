@@ -29,14 +29,12 @@
           @blur="stopEditing"
           @mousedown.stop
           @click.stop
-        >{{ element.content }}</div>
+        />
 
         <!-- VIEW MODE: normal div -->
-        <div
-          v-else
-          class="el-content"
-          :style="contentStyle"
-        >{{ element.content }}</div>
+        <div v-else class="el-content" :style="contentStyle">
+          {{ element.content }}
+        </div>
       </div>
 
       <div class="el-overlay" v-if="!isEditing">
@@ -152,10 +150,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, onMounted, onUnmounted, inject, nextTick } from "vue";
-import { calcSnap } from '../../core/snapEngine';
-import type { SnapLine, ContainerRect } from '../../core/snapEngine';
-import { calcSnapWithContainer } from '../../core/snapEngine'
+import {
+  computed,
+  ref,
+  watch,
+  onMounted,
+  onUnmounted,
+  inject,
+  nextTick,
+} from "vue";
+import { calcSnap } from "../../core/snapEngine";
+import type { SnapLine, ContainerRect } from "../../core/snapEngine";
+import { calcSnapWithContainer } from "../../core/snapEngine";
 import { useEditorStore } from "../../store/editorStore";
 import { createResizeCommand } from "../../core/commands/resizeElement";
 import { createGroupMoveCommand } from "../../core/commands/moveGroupElement";
@@ -164,7 +170,7 @@ import { createUpdateStyleCommand } from "../../core/commands/updateStyle";
 import ElementToolbar from "./ElementToolbar.vue";
 import type { TextElement as TextElementType } from "../../types";
 
-defineOptions({ inheritAttrs: false })
+defineOptions({ inheritAttrs: false });
 
 const props = defineProps<{
   element: TextElementType;
@@ -172,8 +178,8 @@ const props = defineProps<{
 
 const store = useEditorStore();
 
-const setSnapLines = inject<(lines: SnapLine[]) => void>('setSnapLines')
-const getContainerRect = inject<() => ContainerRect>('getContainerRect')
+const setSnapLines = inject<(lines: SnapLine[]) => void>("setSnapLines");
+const getContainerRect = inject<() => ContainerRect>("getContainerRect");
 
 // =====================
 // STATE
@@ -188,7 +194,8 @@ const editRef = ref<HTMLElement | null>(null);
 // =====================
 
 const isEditing = ref(false);
-let editingOldContent = '';
+const draftContent = ref("");
+let editingOldContent = "";
 
 const startEditing = () => {
   // Select element nếu chưa select
@@ -198,10 +205,12 @@ const startEditing = () => {
 
   isEditing.value = true;
   editingOldContent = props.element.content;
+  draftContent.value = editingOldContent;
 
   nextTick(() => {
     if (!editRef.value) return;
 
+    editRef.value.innerText = draftContent.value;
     editRef.value.focus();
 
     // Đặt cursor về cuối text
@@ -218,7 +227,9 @@ const stopEditing = () => {
   if (!isEditing.value) return;
   isEditing.value = false;
 
-  const newContent = editRef.value?.innerText ?? props.element.content;
+  const newContent =
+    editRef.value?.innerText ?? draftContent.value ?? props.element.content;
+  draftContent.value = newContent;
 
   // Chỉ tạo command nếu nội dung thực sự thay đổi
   if (newContent !== editingOldContent) {
@@ -234,32 +245,33 @@ const stopEditing = () => {
 
 const onInput = (e: Event) => {
   const target = e.target as HTMLElement;
-  // Cập nhật store realtime để text hiển thị ngay
-  store.updateText(props.element.id, target.innerText);
+  draftContent.value = target.innerText;
 };
 
 const onKeyDown = (e: KeyboardEvent) => {
   // Escape: huỷ thay đổi
-  if (e.key === 'Escape') {
+  if (e.key === "Escape") {
     e.preventDefault();
-    // Khôi phục nội dung cũ
-    store.updateText(props.element.id, editingOldContent);
+    draftContent.value = editingOldContent;
+    if (editRef.value) {
+      editRef.value.innerText = editingOldContent;
+    }
     isEditing.value = false;
     return;
   }
 
   // Enter không có Shift: thoát editing (Shift+Enter = xuống dòng)
-  if (e.key === 'Enter' && !e.shiftKey) {
+  if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
     editRef.value?.blur();
     return;
   }
 
   // Chặn các phím shortcut global (Ctrl+Z, Delete...) không bị bắt khi đang gõ
-  if (e.key === 'Delete' || e.key === 'Backspace') {
+  if (e.key === "Delete" || e.key === "Backspace") {
     e.stopPropagation();
   }
-  if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+  if ((e.ctrlKey || e.metaKey) && e.key === "z") {
     e.stopPropagation();
   }
 };
@@ -273,11 +285,11 @@ const onGlobalClick = (e: MouseEvent) => {
 };
 
 onMounted(() => {
-  document.addEventListener('mousedown', onGlobalClick, true);
+  document.addEventListener("mousedown", onGlobalClick, true);
 });
 
 onUnmounted(() => {
-  document.removeEventListener('mousedown', onGlobalClick, true);
+  document.removeEventListener("mousedown", onGlobalClick, true);
   if (typeof cancelAnimationFrame !== "undefined") cancelAnimationFrame(rafId);
 });
 
@@ -366,7 +378,9 @@ const boxStyle = computed(() => ({
     ? "1.5px solid #4A6B4D"
     : isSelected.value
     ? "1px solid #4A6B4D"
-    : `${(props.element as any).borderWidth || 0}px solid ${(props.element as any).borderColor || "transparent"}`,
+    : `${(props.element as any).borderWidth || 0}px solid ${
+        (props.element as any).borderColor || "transparent"
+      }`,
   borderRadius: `${(props.element as any).borderRadius || 0}px`,
   backgroundColor: (props.element as any).backgroundColor || "transparent",
   padding: `${(props.element as any).padding || 0}px`,
@@ -431,52 +445,56 @@ const startDrag = (e: MouseEvent) => {
 };
 
 const onDrag = (e: MouseEvent) => {
-  const dx = e.clientX - startX
-  const dy = e.clientY - startY
+  const dx = e.clientX - startX;
+  const dy = e.clientY - startY;
 
   // Tính vị trí raw trước khi snap (chỉ element đang kéo)
-  const leadEl = store.findElementById(props.element.id)
-  if (!leadEl) return
-  const leadInitialPosition = initialPositions[props.element.id]
-  if (!leadInitialPosition) return
+  const leadEl = store.findElementById(props.element.id);
+  if (!leadEl) return;
+  const leadInitialPosition = initialPositions[props.element.id];
+  if (!leadInitialPosition) return;
 
-  const rawX = leadInitialPosition.x + dx
-  const rawY = leadInitialPosition.y + dy
+  const rawX = leadInitialPosition.x + dx;
+  const rawY = leadInitialPosition.y + dy;
 
   // Lấy elements khác làm snap target
   const others = store.activeSectionElements
-    .filter(el => !store.selectedIds.includes(el.id))
-    .map(el => ({ x: el.x, y: el.y, width: el.width, height: el.height }))
+    .filter((el) => !store.selectedIds.includes(el.id))
+    .map((el) => ({ x: el.x, y: el.y, width: el.width, height: el.height }));
 
   // Lấy container rect từ DOM tại thời điểm drag
   const container = getContainerRect?.() ?? {
-    x: 0, y: 0, width: 800, height: 600, paddingX: 48, paddingY: 48
-  }
-
+    x: 0,
+    y: 0,
+    width: 800,
+    height: 600,
+    paddingX: 48,
+    paddingY: 48,
+  };
 
   const result = calcSnapWithContainer(
     { x: rawX, y: rawY, width: leadEl.width, height: leadEl.height },
     others,
     container
-  )
+  );
 
   // Delta bù từ snap
-  const snapDx = result.x - rawX
-  const snapDy = result.y - rawY
+  const snapDx = result.x - rawX;
+  const snapDy = result.y - rawY;
 
   // Apply cho toàn bộ selection (group drag vẫn hoạt động)
-  store.selectedIds.forEach(id => {
-    const init = initialPositions[id]
-    if (!init) return
-    store.move(id, init.x + dx + snapDx, init.y + dy + snapDy)
-  })
+  store.selectedIds.forEach((id) => {
+    const init = initialPositions[id];
+    if (!init) return;
+    store.move(id, init.x + dx + snapDx, init.y + dy + snapDy);
+  });
 
   // Render guide lines
-  setSnapLines?.(result.lines)
-}
+  setSnapLines?.(result.lines);
+};
 
 const stopDrag = () => {
-  setSnapLines?.([])
+  setSnapLines?.([]);
   const items = store.selectedIds
     .map((id) => {
       const el = store.findElementById(id);
@@ -892,7 +910,7 @@ const stopRotate = () => {
   &--editing {
     outline: none;
     cursor: text;
-    caret-color: #4A6B4D;
+    caret-color: #4a6b4d;
     // Highlight selection màu sage
     &::selection {
       background: rgba(74, 107, 77, 0.25);

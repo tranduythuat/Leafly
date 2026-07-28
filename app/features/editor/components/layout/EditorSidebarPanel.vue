@@ -1,6 +1,7 @@
 <template>
   <div class="flex-1 p-3 overflow-y-auto">
     <ImagePanel v-if="type === 'image'" />
+    <BlocksPanel v-else-if="type === 'blocks'" />
     <div v-else class="grid grid-cols-2 gap-4">
       <SidebarItem
         v-for="item in items"
@@ -16,6 +17,7 @@
 import { computed } from "vue";
 import SidebarItem from "./EditorSidebarItem.vue";
 import ImagePanel from "./panel/ImagePanel.vue";
+import BlocksPanel from "./panel/BlocksPanel.vue";
 
 const props = defineProps({
   type: String,
