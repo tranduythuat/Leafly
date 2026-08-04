@@ -379,6 +379,7 @@ export const useEditorStore = defineStore("editor", {
         submitColor: "#B5694A",
         action: "rsvp",
         bgColor: "#ffffff",
+        borderColor: "#EDE6D8",
         borderRadius: 8,
         showLabels: true,
       };

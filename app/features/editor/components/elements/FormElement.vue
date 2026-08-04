@@ -31,12 +31,14 @@
         <textarea
           v-if="field.type === 'textarea'"
           class="form-el__input form-el__input--area"
+          :style="fieldInputStyle(field)"
           disabled
         />
 
         <select
           v-else-if="field.type === 'select'"
           class="form-el__input"
+          :style="fieldInputStyle(field)"
           disabled
         >
           <option v-if="!field.options?.length">{{ field.label }}</option>
@@ -65,7 +67,7 @@
               v-for="(opt, i) in field.options"
               :key="opt.id"
               class="form-el__pill"
-              :class="{ 'form-el__pill--active': i === 0 }"
+              :class="{ 'form-el__pill--active': opt.defaultChecked }"
               :style="pillItemStyle(field)"
             >
               <span class="form-el__pill-main">{{ opt.label }}</span>
@@ -83,7 +85,12 @@
             :key="opt.id"
             class="form-el__option"
           >
-            <input type="radio" :name="field.id" disabled />
+            <input
+              type="radio"
+              :name="field.id"
+              disabled
+              :checked="opt.defaultChecked"
+            />
             <span>{{ opt.label }}</span>
           </label>
         </div>
@@ -108,6 +115,7 @@
               v-for="opt in field.options"
               :key="opt.id"
               class="form-el__pill"
+              :class="{ 'form-el__pill--active': opt.defaultChecked }"
               :style="pillItemStyle(field)"
             >
               <span class="form-el__pill-main">{{ opt.label }}</span>
@@ -125,7 +133,7 @@
             :key="opt.id"
             class="form-el__option"
           >
-            <input type="checkbox" disabled />
+            <input type="checkbox" disabled :checked="opt.defaultChecked" />
             <span>{{ opt.label }}</span>
           </label>
         </div>
@@ -134,6 +142,7 @@
           v-else
           class="form-el__input"
           :type="field.type === 'phone' ? 'tel' : field.type"
+          :style="fieldInputStyle(field)"
           disabled
           :placeholder="field.label"
         />
@@ -216,12 +225,17 @@ const formStyle = computed(() => ({
   height: "100%",
   overflow: "auto",
   background: props.element.bgColor,
+  border: `1px solid ${props.element.borderColor ?? "#EDE6D8"}`,
   borderRadius: `${props.element.borderRadius}px`,
   padding: "16px",
   boxSizing: "border-box",
-  pointerEvents: "none", // canvas: preview-only, không nhập liệu được khi đang edit
+  pointerEvents: "none",
   gap: `${props.element.fieldGap ?? 10}px`,
 }));
+
+const fieldInputStyle = (field: FormField) => ({
+  borderColor: field.borderColor ?? props.element.borderColor ?? "#EDE6D8",
+});
 
 const pillGroupJustify = (field: FormField) => {
   if ((field.pillLayout ?? "row") === "grid2") return {};
@@ -244,6 +258,7 @@ const pillItemStyle = (field: FormField) => {
     width: width === "auto" ? undefined : width + "px",
     minWidth: width === "auto" ? undefined : width + "px",
     height: field.pillHeight ? field.pillHeight + "px" : undefined,
+    borderColor: field.borderColor ?? props.element.borderColor ?? "#EDE6D8",
   };
 };
 </script>

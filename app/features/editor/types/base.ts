@@ -45,8 +45,9 @@ export interface ImageElement extends BaseElement {
 
 export interface FormFieldOption {
   id: string;
-  label: string; // dòng chính, in hoa (VD: "YES")
-  subLabel?: string; // dòng phụ, nhỏ hơn (VD: "/CÓ/")
+  label: string;
+  subLabel?: string;
+  defaultChecked?: boolean;
 }
 
 export interface FormField {
@@ -62,6 +63,7 @@ export interface FormField {
     | "number";
   label: string;
   required: boolean;
+  borderColor?: string;
   options?: FormFieldOption[];
   displayStyle?: "default" | "pill";
   pillRadius?: number; // border-radius riêng cho pill, px
@@ -82,6 +84,7 @@ export interface FormElement extends BaseElement {
   actionEmail?: string;
   actionUrl?: string;
   bgColor: string;
+  borderColor: string;
   borderRadius: number;
   showLabels: boolean;
   fieldGap?: number;

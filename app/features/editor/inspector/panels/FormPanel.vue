@@ -61,6 +61,21 @@
           </div>
         </div>
 
+        <div class="fp-field-border">
+          <span class="fp-style-label">Border color</span>
+          <div class="fp-color-picker">
+            <input
+              type="color"
+              class="fp-color-input"
+              :value="field.borderColor ?? local.borderColor ?? '#4A6B4D'"
+              @input="onFieldBorderColorInput(field, $event)"
+            />
+            <span class="fp-color-value">{{
+              field.borderColor ?? local.borderColor ?? "#4A6B4D"
+            }}</span>
+          </div>
+        </div>
+
         <!-- Display style switch: chỉ cho radio / checkbox -->
         <div
           v-if="field.type === 'radio' || field.type === 'checkbox'"
@@ -98,7 +113,7 @@
         <div v-if="field.displayStyle === 'pill'" class="fp-pill-config">
           <!-- Question label -->
           <div class="fp-pill-question">
-            <span class="fp-style-label">Question text</span>
+            <span class="fp-style-label">Title</span>
             <input
               :value="field.pillQuestion"
               class="fp-option-input"
@@ -335,6 +350,27 @@
                 sync();
               "
             />
+            <button
+              v-if="field.type === 'checkbox' || field.type === 'radio'"
+              class="fp-icon-btn"
+              :class="{ 'fp-icon-btn--active': opt.defaultChecked }"
+              title="Set as default"
+              @click="
+                opt.defaultChecked = !opt.defaultChecked;
+                sync();
+              "
+            >
+              <svg
+                width="10"
+                height="10"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </button>
             <input
               v-if="field.displayStyle === 'pill'"
               :value="opt.subLabel"
@@ -466,6 +502,15 @@
       "
     />
     <InsField
+      type="color"
+      label="Border color"
+      :model-value="local.borderColor"
+      @update:model-value="
+        local.borderColor = $event;
+        sync();
+      "
+    />
+    <InsField
       type="range"
       label="Border radius"
       :model-value="local.borderRadius"
@@ -539,6 +584,7 @@ type Field = {
   type: string;
   label: string;
   required: boolean;
+  borderColor?: string;
   options?: FieldOption[];
   displayStyle?: "default" | "pill";
   pillRadius?: number;
@@ -567,6 +613,7 @@ const local = reactive({
   actionEmail: "",
   actionUrl: "",
   bgColor: "#ffffff",
+  borderColor: "#EDE6D8",
   borderRadius: 8,
   showLabels: true,
   fieldGap: 10,
@@ -586,6 +633,7 @@ watch(
     local.actionEmail = el.actionEmail ?? "";
     local.actionUrl = el.actionUrl ?? "";
     local.bgColor = el.bgColor ?? "#ffffff";
+    local.borderColor = el.borderColor ?? "#EDE6D8";
     local.borderRadius = el.borderRadius ?? 8;
     local.showLabels = el.showLabels ?? true;
     local.fieldGap = el.fieldGap ?? 10;
@@ -597,6 +645,12 @@ const uid = () => Math.random().toString(36).slice(2, 8);
 const onPillRadiusInput = (field: Field, e: Event) => {
   const val = +(e.target as HTMLInputElement).value;
   field.pillRadius = val >= 40 ? 999 : val;
+  sync();
+};
+
+const onFieldBorderColorInput = (field: Field, e: Event) => {
+  const val = (e.target as HTMLInputElement).value;
+  field.borderColor = val;
   sync();
 };
 
@@ -735,6 +789,48 @@ const sync = () => {
 .fp-field-actions {
   display: flex;
   gap: 3px;
+}
+
+.fp-field-border {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 0 0;
+}
+
+.fp-color-picker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid $cream-dark;
+  border-radius: $radius-sm;
+  padding: 3px 8px;
+  background: $white;
+  cursor: pointer;
+  transition: border-color 0.15s;
+
+  &:focus-within {
+    border-color: $sage;
+  }
+}
+
+.fp-color-input {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: none;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.fp-color-value {
+  font-size: 11px;
+  color: $text-mid;
+  font-family: "Courier New", monospace;
+  letter-spacing: 0.04em;
 }
 
 .fp-icon-btn {
