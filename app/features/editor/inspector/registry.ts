@@ -4,6 +4,7 @@ import ImagePanel from "./panels/ImagePanel.vue";
 import FormPanel from "./panels/FormPanel.vue";
 import MapPanel from "./panels/MapPanel.vue";
 import AlbumPanel from "./panels/AlbumPanel.vue";
+import CountdownPanel from "./panels/CountdownPanel.vue";
 
 // ── Config per element type ──
 export interface InspectorMeta {
@@ -74,6 +75,16 @@ const registry = new Map<string, InspectorMeta>([
       badgeTextColor: "#b5406a",
       component: AlbumPanel,
       shared: { position: true, transform: true, layer: true },
+    },
+  ],
+  [
+    "countdown",
+    {
+      label: "Countdown",
+      badgeColor: "#fef3e8",
+      badgeTextColor: "#b5693a",
+      component: CountdownPanel,
+      shared: { position: true, transform: false, layer: true },
     },
   ],
 ]);
