@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-import { ClipboardList, MapPin, Images } from "@lucide/vue";
+import { ClipboardList, MapPin, Images, Timer } from "@lucide/vue";
 import { useEditorStore } from "../../../store/editorStore";
 
 const store = useEditorStore();
@@ -22,9 +22,10 @@ const blocks = [
   { key: "form", label: "RSVP Form", icon: ClipboardList },
   { key: "map", label: "Map", icon: MapPin },
   { key: "album", label: "Album", icon: Images },
+  { key: "countdown", label: "Countdown", icon: Timer },
 ] as const;
 
-const insert = (key: "form" | "map" | "album") => {
+const insert = (key: "form" | "map" | "album" | "countdown") => {
   const sectionEl = document.querySelector(
     `[data-section-id="${store.activeSectionId}"]`
   ) as HTMLElement | null;
@@ -35,6 +36,8 @@ const insert = (key: "form" | "map" | "album") => {
     store.insertMapBlock(sectionEl?.clientWidth, sectionEl?.clientHeight);
   if (key === "album")
     store.insertAlbumBlock(sectionEl?.clientWidth, sectionEl?.clientHeight);
+  if (key === "countdown")
+    store.insertCountdownBlock(sectionEl?.clientWidth, sectionEl?.clientHeight);
 };
 </script>
 

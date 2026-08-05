@@ -57,6 +57,7 @@ import ImageElement from "../elements/ImageElement.vue";
 import FormElement from "../elements/FormElement.vue";
 import MapElement from "../elements/MapElement.vue";
 import AlbumElement from "../elements/AlbumElement.vue";
+import CountdownElement from "../elements/CountdownElement.vue";
 import BoundingBox from "./BoundingBox.vue";
 import LayerPicker from "./LayerPicker.vue";
 import type { LayerPickerItem } from "./LayerPicker.vue";
@@ -187,6 +188,8 @@ const resolveComponent = (el: EditorElement) => {
   if (el.type === "form") return FormElement;
   if (el.type === "map") return MapElement;
   if (el.type === "album") return AlbumElement;
+  if (el.type === "countdown") return CountdownElement;
+
   return TextElement;
 };
 
@@ -263,6 +266,15 @@ const buildPickerItems = (elements: EditorElement[]): LayerPickerItem[] => {
         id: el.id,
         type: "album",
         label: `Album (${el.images.length})`,
+        zIndex: el.zIndex,
+      };
+    }
+
+    if (el.type === "countdown") {
+      return {
+        id: el.id,
+        type: "countdown",
+        label: "Countdown",
         zIndex: el.zIndex,
       };
     }

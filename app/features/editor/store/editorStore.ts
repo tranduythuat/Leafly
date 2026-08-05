@@ -466,6 +466,48 @@ export const useEditorStore = defineStore("editor", {
       this.executeCommand(command);
     },
 
+    insertCountdownBlock(sectionDOMWidth?: number, sectionDOMHeight?: number) {
+      const section = this.activeSection;
+      if (!section) return;
+
+      const width = 320, height = 140;
+      const sectionWidth = sectionDOMWidth ?? 800;
+      const sectionHeight = sectionDOMHeight ?? section.style?.minHeight ?? 320;
+
+      const oneMonthLater = new Date();
+      oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+
+      const element: EditorElement = {
+        id: createElementId(),
+        type: "countdown",
+        x: Math.round((sectionWidth - width) / 2),
+        y: Math.round((sectionHeight - height) / 2),
+        width,
+        height,
+        zIndex: getNextZIndex(section),
+        targetDate: oneMonthLater.toISOString().slice(0, 16),
+        label: "Đếm ngược đến ngày trọng đại",
+        showDays: true,
+        showHours: true,
+        showMinutes: true,
+        showSeconds: true,
+        numberColor: "#36402d",
+        labelColor: "#8B7355",
+        accentColor: "#eef3e8",
+        layout: "boxes",
+        borderRadius: 10,
+        bgColor: "transparent",
+        onComplete: "message",
+        completeMessage: "🎉 Đã đến ngày!",
+      };
+
+      const command = createInsertGenericCommand(this, {
+        sectionId: section.id,
+        element,
+      });
+      this.executeCommand(command);
+    },
+
     select(id: string, isMulti = false) {
       const section = this.findSectionByElementId(id);
       if (!section) return;
@@ -477,8 +519,8 @@ export const useEditorStore = defineStore("editor", {
       const element = section.elements.find((el) => el.id === id);
       const groupIds = element?.groupId
         ? section.elements
-            .filter((el) => el.groupId === element.groupId)
-            .map((el) => el.id)
+          .filter((el) => el.groupId === element.groupId)
+          .map((el) => el.id)
         : [id];
 
       this.ui.activeSectionId = section.id;
@@ -594,9 +636,9 @@ export const useEditorStore = defineStore("editor", {
         ...patch,
         background: patch.background
           ? {
-              ...section.style.background,
-              ...patch.background,
-            }
+            ...section.style.background,
+            ...patch.background,
+          }
           : section.style.background,
       };
 

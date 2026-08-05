@@ -135,9 +135,28 @@ export interface AlbumElement extends BaseElement {
   flipV?: boolean;
 }
 
+export interface CountdownElement extends BaseElement {
+  type: "countdown";
+  targetDate: string; // ISO string, vd: "2025-12-24T18:00:00"
+  label: string; // vd: "Đếm ngược đến ngày trọng đại"
+  showDays: boolean;
+  showHours: boolean;
+  showMinutes: boolean;
+  showSeconds: boolean;
+  numberColor: string;
+  labelColor: string;
+  accentColor: string;
+  layout: "boxes" | "inline" | "circles";
+  borderRadius: number;
+  bgColor: string;
+  onComplete: "hide" | "message";
+  completeMessage: string;
+}
+
 export type CanvasElement =
   | TextElement
   | ImageElement
   | FormElement
   | MapElement
-  | AlbumElement;
+  | AlbumElement
+  | CountdownElement;
