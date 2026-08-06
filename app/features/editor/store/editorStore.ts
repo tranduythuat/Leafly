@@ -651,6 +651,79 @@ export const useEditorStore = defineStore("editor", {
       this.executeCommand(command);
     },
 
+    insertQRCodeBlock(sectionDOMWidth?: number, sectionDOMHeight?: number) {
+      const section = this.activeSection;
+      if (!section) return;
+
+      const width = 200, height = 240;
+      const sectionWidth = sectionDOMWidth ?? 800;
+      const sectionHeight = sectionDOMHeight ?? section.style?.minHeight ?? 320;
+
+      const element: EditorElement = {
+        id: createElementId(),
+        type: "qrcode",
+        x: Math.round((sectionWidth - width) / 2),
+        y: Math.round((sectionHeight - height) / 2),
+        width,
+        height,
+        zIndex: getNextZIndex(section),
+        data: "https://leafly.app/rsvp/your-slug",
+        label: "Quét để xác nhận tham dự",
+        fgColor: "#36402d",
+        bgColor: "#ffffff",
+        errorCorrection: "M",
+        margin: 2,
+        cardBg: "#ffffff",
+        cardRadius: 12,
+        labelColor: "#8B7355",
+        showLabel: true,
+      };
+
+      // createInsertGenericCommand trả về Command { execute, undo }
+      // -> executeCommand() gọi history.execute() -> push vào undoStack, clear redoStack
+      const command = createInsertGenericCommand(this, {
+        sectionId: section.id,
+        element,
+      });
+      this.executeCommand(command);
+    },
+
+    insertMusicPlayerBlock(sectionDOMWidth?: number, sectionDOMHeight?: number) {
+      const section = this.activeSection;
+      if (!section) return;
+
+      const width = 300, height = 72; // mặc định variant "bar"
+      const sectionWidth = sectionDOMWidth ?? 800;
+      const sectionHeight = sectionDOMHeight ?? section.style?.minHeight ?? 320;
+
+      const element: EditorElement = {
+        id: createElementId(),
+        type: "musicPlayer",
+        x: Math.round((sectionWidth - width) / 2),
+        y: Math.round((sectionHeight - height) / 2),
+        width,
+        height,
+        zIndex: getNextZIndex(section),
+        src: "",
+        title: "",
+        artist: "",
+        variant: "bar",
+        accentColor: "#6B8C6E",
+        bgColor: "#ffffff",
+        textColor: "#2C2416",
+        borderRadius: 999,
+        autoplay: false,
+        loop: true,
+        showTitle: true,
+      };
+
+      const command = createInsertGenericCommand(this, {
+        sectionId: section.id,
+        element,
+      });
+      this.executeCommand(command);
+    },
+
     select(id: string, isMulti = false) {
       const section = this.findSectionByElementId(id);
       if (!section) return;

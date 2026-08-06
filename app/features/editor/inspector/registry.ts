@@ -7,6 +7,8 @@ import AlbumPanel from "./panels/AlbumPanel.vue";
 import CountdownPanel from "./panels/CountdownPanel.vue";
 import LoveStoryPanel from "./panels/LoveStoryPanel.vue";
 import VideoPanel from "./panels/VideoPanel.vue";
+import QRCodePanel from "./panels/QRCodePanel.vue";
+import MusicPlayerPanel from "./panels/MusicPlayerPanel.vue";
 
 // ── Config per element type ──
 export interface InspectorMeta {
@@ -109,6 +111,26 @@ const registry = new Map<string, InspectorMeta>([
       // Video xoay được (rotation) nhưng không cần flip/opacity-slider riêng
       // (opacity đã có sẵn trong VideoPanel's "Appearance" section)
       shared: { position: true, transform: true, layer: true },
+    },
+  ],
+  [
+    "qrcode",
+    {
+      label: "QR Code",
+      badgeColor: "#e8f4fb",
+      badgeTextColor: "#1a6fa0",
+      component: QRCodePanel,
+      shared: { position: true, transform: false, layer: true },
+    },
+  ],
+  [
+    "musicPlayer",
+    {
+      label: "Music Player",
+      badgeColor: "#eef3e8",
+      badgeTextColor: "#4A6B4D",
+      component: MusicPlayerPanel,
+      shared: { position: true, transform: false, layer: true },
     },
   ],
 ]);

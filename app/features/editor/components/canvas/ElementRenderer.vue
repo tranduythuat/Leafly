@@ -59,7 +59,9 @@ import MapElement from "../elements/MapElement.vue";
 import AlbumElement from "../elements/AlbumElement.vue";
 import CountdownElement from "../elements/CountdownElement.vue";
 import LoveStoryElement from "../elements/LoveStoryElement.vue";
-import VideoElement from "../elements/VideoElement.vue"; //
+import VideoElement from "../elements/VideoElement.vue";
+import MusicPlayerElement from "../elements/MusicPlayerElement.vue";
+import QRCodeElement from "../elements/QRCodeElement.vue";
 import BoundingBox from "./BoundingBox.vue";
 import LayerPicker from "./LayerPicker.vue";
 import type { LayerPickerItem } from "./LayerPicker.vue";
@@ -193,6 +195,8 @@ const resolveComponent = (el: EditorElement) => {
   if (el.type === "countdown") return CountdownElement;
   if (el.type === "loveStory") return LoveStoryElement;
   if (el.type === "video") return VideoElement;
+  if (el.type === "qrcode") return QRCodeElement;
+  if (el.type === "musicPlayer") return MusicPlayerElement;
 
   return TextElement;
 };
@@ -300,6 +304,24 @@ const buildPickerItems = (elements: EditorElement[]): LayerPickerItem[] => {
           el.sourceType === "upload"
             ? "Video (upload)"
             : `Video (${el.sourceType})`,
+        zIndex: el.zIndex,
+      };
+    }
+
+    if (el.type === "qrcode") {
+      return {
+        id: el.id,
+        type: "qrcode",
+        label: el.label || "QR Code",
+        zIndex: el.zIndex,
+      };
+    }
+
+    if (el.type === "musicPlayer") {
+      return {
+        id: el.id,
+        type: "musicPlayer",
+        label: el.title || "Music Player",
         zIndex: el.zIndex,
       };
     }
