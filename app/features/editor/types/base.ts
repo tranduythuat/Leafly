@@ -50,7 +50,25 @@ export interface VideoElement extends BaseElement {
   loop?: boolean
   muted?: boolean
   controls?: boolean
+  borderRadius: number
+  opacity: number
   thumbnail?: string    // cache thumbnail cho youtube/vimeo (hiển thị nhanh khi chưa load iframe)
+}
+
+// --- Music Player (inline widget, khác với backgroundMusic toàn trang) ---
+export interface MusicPlayerElement extends BaseElement {
+  type: "musicPlayer";
+  src: string;              // blob URL hoặc URL mp3
+  title: string;             // vd: "Perfect - Ed Sheeran"
+  artist?: string;
+  variant: "bar" | "card";   // bar: thanh ngang gọn; card: khối vuông có nút play lớn giữa
+  accentColor: string;       // màu nút play + waveform
+  bgColor: string;
+  textColor: string;
+  borderRadius: number;
+  autoplay: boolean;
+  loop: boolean;
+  showTitle: boolean;
 }
 
 // ---- Form -----
@@ -190,6 +208,21 @@ export interface LoveStoryElement extends BaseElement {
   imageRatio: "square" | "landscape" | "portrait";
 }
 
+// --- QR Code ---
+export interface QRCodeElement extends BaseElement {
+  type: "qrcode";
+  data: string;              // URL/text được mã hoá, vd link RSVP hoặc thông tin chuyển khoản
+  label: string;              // caption dưới QR, vd "Quét để xác nhận tham dự"
+  fgColor: string;            // màu module QR
+  bgColor: string;            // màu nền
+  errorCorrection: "L" | "M" | "Q" | "H";
+  margin: number;             // quiet zone, tính theo module
+  cardBg: string;
+  cardRadius: number;
+  labelColor: string;
+  showLabel: boolean;
+}
+
 export type CanvasElement =
   | TextElement
   | ImageElement
@@ -198,5 +231,7 @@ export type CanvasElement =
   | AlbumElement
   | CountdownElement
   | LoveStoryElement
-  | VideoElement;
+  | VideoElement
+  | QRCodeElement
+  | MusicPlayerElement;
 

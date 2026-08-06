@@ -20,6 +20,8 @@ import {
   Timer,
   Heart,
   Video,
+  QrCode,
+  Music2,
 } from "@lucide/vue";
 import { useEditorStore } from "../../../store/editorStore";
 
@@ -32,10 +34,20 @@ const blocks = [
   { key: "countdown", label: "Countdown", icon: Timer },
   { key: "loveStory", label: "Love Story", icon: Heart },
   { key: "video", label: "Video", icon: Video },
+  { key: "qrcode", label: "QR Code", icon: QrCode },
+  { key: "musicPlayer", label: "Music Player", icon: Music2 },
 ] as const;
 
 const insert = (
-  key: "form" | "map" | "album" | "countdown" | "loveStory" | "video"
+  key:
+    | "form"
+    | "map"
+    | "album"
+    | "countdown"
+    | "loveStory"
+    | "video"
+    | "qrcode"
+    | "musicPlayer"
 ) => {
   const sectionEl = document.querySelector(
     `[data-section-id="${store.activeSectionId}"]`
@@ -53,6 +65,13 @@ const insert = (
     store.insertLoveStoryBlock(sectionEl?.clientWidth, sectionEl?.clientHeight);
   if (key === "video")
     store.insertVideoBlock("", sectionEl?.clientWidth, sectionEl?.clientHeight);
+  if (key === "qrcode")
+    store.insertQRCodeBlock(sectionEl?.clientWidth, sectionEl?.clientHeight);
+  if (key === "musicPlayer")
+    store.insertMusicPlayerBlock(
+      sectionEl?.clientWidth,
+      sectionEl?.clientHeight
+    );
 };
 </script>
 
