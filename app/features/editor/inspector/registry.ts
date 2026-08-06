@@ -5,6 +5,8 @@ import FormPanel from "./panels/FormPanel.vue";
 import MapPanel from "./panels/MapPanel.vue";
 import AlbumPanel from "./panels/AlbumPanel.vue";
 import CountdownPanel from "./panels/CountdownPanel.vue";
+import LoveStoryPanel from "./panels/LoveStoryPanel.vue";
+import VideoPanel from "./panels/VideoPanel.vue";
 
 // ── Config per element type ──
 export interface InspectorMeta {
@@ -85,6 +87,28 @@ const registry = new Map<string, InspectorMeta>([
       badgeTextColor: "#b5693a",
       component: CountdownPanel,
       shared: { position: true, transform: false, layer: true },
+    },
+  ],
+  [
+    "loveStory",
+    {
+      label: "Love Story",
+      badgeColor: "#fde8ee",
+      badgeTextColor: "#b5406a",
+      component: LoveStoryPanel,
+      shared: { position: true, transform: false, layer: true },
+    },
+  ],
+  [
+    "video",
+    {
+      label: "Video",
+      badgeColor: "#e8f4fb",
+      badgeTextColor: "#1a6fa0",
+      component: VideoPanel,
+      // Video xoay được (rotation) nhưng không cần flip/opacity-slider riêng
+      // (opacity đã có sẵn trong VideoPanel's "Appearance" section)
+      shared: { position: true, transform: true, layer: true },
     },
   ],
 ]);

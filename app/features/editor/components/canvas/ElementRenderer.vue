@@ -58,6 +58,8 @@ import FormElement from "../elements/FormElement.vue";
 import MapElement from "../elements/MapElement.vue";
 import AlbumElement from "../elements/AlbumElement.vue";
 import CountdownElement from "../elements/CountdownElement.vue";
+import LoveStoryElement from "../elements/LoveStoryElement.vue";
+import VideoElement from "../elements/VideoElement.vue"; //
 import BoundingBox from "./BoundingBox.vue";
 import LayerPicker from "./LayerPicker.vue";
 import type { LayerPickerItem } from "./LayerPicker.vue";
@@ -189,6 +191,8 @@ const resolveComponent = (el: EditorElement) => {
   if (el.type === "map") return MapElement;
   if (el.type === "album") return AlbumElement;
   if (el.type === "countdown") return CountdownElement;
+  if (el.type === "loveStory") return LoveStoryElement;
+  if (el.type === "video") return VideoElement;
 
   return TextElement;
 };
@@ -275,6 +279,27 @@ const buildPickerItems = (elements: EditorElement[]): LayerPickerItem[] => {
         id: el.id,
         type: "countdown",
         label: "Countdown",
+        zIndex: el.zIndex,
+      };
+    }
+
+    if (el.type === "loveStory") {
+      return {
+        id: el.id,
+        type: "loveStory",
+        label: `Love Story (${el.milestones.length})`,
+        zIndex: el.zIndex,
+      };
+    }
+
+    if (el.type === "video") {
+      return {
+        id: el.id,
+        type: "video",
+        label:
+          el.sourceType === "upload"
+            ? "Video (upload)"
+            : `Video (${el.sourceType})`,
         zIndex: el.zIndex,
       };
     }

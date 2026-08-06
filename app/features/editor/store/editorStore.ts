@@ -13,12 +13,15 @@ import { sectionPresets } from "../data/sectionPresets";
 import { createInsertGenericCommand } from "../core/commands/insertGenericBlock";
 import { createInsertTextCommand } from "../core/commands/inserttextblock";
 import { createInsertImageCommand } from "../core/commands/insertImageBlock";
+import { createInsertVideoCommand } from "../core/commands/insertVideoBlock"
+import { detectVideoSource } from "../utils/videoUtils"
 import { createDuplicateElementCommand } from "../core/commands/duplicateElement";
 import { createRemoveElementCommand } from "../core/commands/removeElement";
 import { createUpdateSectionStyleCommand } from "../core/commands/updateSectionStyle";
 import { createUpdateStyleCommand } from "../core/commands/updateStyle";
 import { createAlignCommand, computeAlignment } from "../core/commands/align";
 import { createGroupCommand } from "../core/commands/group";
+import { createSetBackgroundMusicCommand } from "../core/commands/setBackgroundMusic"
 import type { AlignType } from "../types";
 
 let history = createHistory();
@@ -65,6 +68,7 @@ export const useEditorStore = defineStore("editor", {
   state: (): EditorState => ({
     document: {
       background: { ...defaultBackground },
+      backgroundMusic: null,
       sections: [
         {
           id: initialSectionId,
@@ -116,6 +120,7 @@ export const useEditorStore = defineStore("editor", {
 
   getters: {
     background: (state) => state.document.background,
+    backgroundMusic: (state) => state.document.backgroundMusic,
     sections: (state) => state.document.sections,
     selectedIds: (state) => state.ui.selectedIds,
     activeSectionId: (state) => state.ui.activeSectionId,
@@ -499,6 +504,144 @@ export const useEditorStore = defineStore("editor", {
         bgColor: "transparent",
         onComplete: "message",
         completeMessage: "🎉 Đã đến ngày!",
+      };
+
+      const command = createInsertGenericCommand(this, {
+        sectionId: section.id,
+        element,
+      });
+      this.executeCommand(command);
+    },
+
+    insertLoveStoryBlock(sectionDOMWidth?: number, sectionDOMHeight?: number) {
+      const section = this.activeSection;
+      if (!section) return;
+
+      const width = 380, height = 420;
+      const sectionWidth = sectionDOMWidth ?? 800;
+      const sectionHeight = sectionDOMHeight ?? section.style?.minHeight ?? 320;
+
+      const element: EditorElement = {
+        id: createElementId(),
+        type: "loveStory",
+        x: Math.round((sectionWidth - width) / 2),
+        y: Math.round((sectionHeight - height) / 2),
+        width,
+        height,
+        zIndex: getNextZIndex(section),
+        milestones: [
+          {
+            id: createElementId(),
+            date: "Tháng 3, 2022",
+            title: "Lần đầu gặp gỡ",
+            description: "Nơi câu chuyện của chúng mình bắt đầu.",
+            image: "",
+          },
+          {
+            id: createElementId(),
+            date: "Tháng 12, 2023",
+            title: "Lời cầu hôn",
+            description: "Khoảnh khắc không thể nào quên.",
+            image: "",
+          },
+        ],
+        layout: "vertical",
+        lineColor: "#DBA98A",
+        dotColor: "#B5694A",
+        dateColor: "#8B7355",
+        titleColor: "#2C2416",
+        textColor: "#5C4A32",
+        bgColor: "transparent",
+        cardBg: "#FFFDF8",
+        cardRadius: 12,
+        itemGap: 20,
+        imageRatio: "landscape",
+      };
+
+      const command = createInsertGenericCommand(this, {
+        sectionId: section.id,
+        element,
+      });
+      this.executeCommand(command);
+    },
+
+    setBackgroundMusic(src: string, name?: string) {
+      const current = this.document.backgroundMusic
+
+      const newMusic = {
+        src,
+        name,
+        autoplay: current?.autoplay ?? false,
+        loop: current?.loop ?? true,
+        volume: current?.volume ?? 0.6,
+      }
+
+      if (current?.src === src) return
+
+      const command = createSetBackgroundMusicCommand(this, {
+        oldMusic: current,
+        newMusic,
+      })
+      this.executeCommand(command)
+    },
+
+    updateMusicSettings(
+      patch: Partial<Pick<import('../types').BackgroundMusic, 'autoplay' | 'loop' | 'volume'>>
+    ) {
+      const current = this.document.backgroundMusic
+      if (!current) return
+
+      const newMusic = { ...current, ...patch }
+      if (JSON.stringify(current) === JSON.stringify(newMusic)) return
+
+      const command = createSetBackgroundMusicCommand(this, {
+        oldMusic: current,
+        newMusic,
+      })
+      this.executeCommand(command)
+    },
+
+    removeBackgroundMusic() {
+      const current = this.document.backgroundMusic
+      if (!current) return
+
+      const command = createSetBackgroundMusicCommand(this, {
+        oldMusic: current,
+        newMusic: null,
+      })
+      this.executeCommand(command)
+    },
+
+    insertVideoBlock(
+      src = "",
+      sectionDOMWidth?: number,
+      sectionDOMHeight?: number
+    ) {
+      const section = this.activeSection;
+      if (!section) return;
+
+      const width = 320,
+        height = 180; // tỉ lệ 16:9 mặc định
+      const sectionWidth = sectionDOMWidth ?? 800;
+      const sectionHeight = sectionDOMHeight ?? section.style?.minHeight ?? 320;
+
+      const element: EditorElement = {
+        id: createElementId(),
+        type: "video",
+        x: Math.round((sectionWidth - width) / 2),
+        y: Math.round((sectionHeight - height) / 2),
+        width,
+        height,
+        zIndex: getNextZIndex(section),
+        rotation: 0,
+        src,
+        sourceType: detectVideoSource(src),
+        autoplay: false,
+        loop: false,
+        muted: false,
+        controls: true,
+        borderRadius: 8,
+        opacity: 100,
       };
 
       const command = createInsertGenericCommand(this, {

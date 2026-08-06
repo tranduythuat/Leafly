@@ -23,6 +23,7 @@ export const sectionPresets: Record<string, Partial<Section>> = {
         height: 60,
         zIndex: 1,
         color: "#36402d",
+        fontFamily: "Playfair Display",
         fontSize: 40,
         alignment: "center",
       }

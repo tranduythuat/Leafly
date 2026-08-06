@@ -6,6 +6,15 @@ export interface BackgroundStyle {
   value: string
 }
 
+// 🎵 NEW
+export interface BackgroundMusic {
+  src: string
+  name?: string
+  autoplay: boolean
+  loop: boolean
+  volume: number // 0 - 1
+}
+
 export interface SectionStyle {
   background: BackgroundStyle
   padding: number
@@ -27,6 +36,7 @@ export interface Section {
 
 export interface EditorDocument {
   background: BackgroundStyle
+  backgroundMusic: BackgroundMusic | null //
   sections: Section[]
 }
 

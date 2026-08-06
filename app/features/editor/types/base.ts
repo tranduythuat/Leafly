@@ -2,6 +2,7 @@ export type ID = string;
 
 export type Alignment = "left" | "center" | "right" | "justify";
 export type HeightMode = "fixed" | "auto";
+export type VideoSourceType = "youtube" | "vimeo" | "upload"
 
 export interface Position {
   x: number;
@@ -41,6 +42,17 @@ export interface ImageElement extends BaseElement {
   };
 }
 
+export interface VideoElement extends BaseElement {
+  type: 'video'
+  src: string          // URL gốc (youtube/vimeo link) hoặc blob/upload URL
+  sourceType: VideoSourceType
+  autoplay?: boolean
+  loop?: boolean
+  muted?: boolean
+  controls?: boolean
+  thumbnail?: string    // cache thumbnail cho youtube/vimeo (hiển thị nhanh khi chưa load iframe)
+}
+
 // ---- Form -----
 
 export interface FormFieldOption {
@@ -53,14 +65,14 @@ export interface FormFieldOption {
 export interface FormField {
   id: string;
   type:
-    | "text"
-    | "textarea"
-    | "email"
-    | "select"
-    | "radio"
-    | "checkbox"
-    | "date"
-    | "number";
+  | "text"
+  | "textarea"
+  | "email"
+  | "select"
+  | "radio"
+  | "checkbox"
+  | "date"
+  | "number";
   label: string;
   required: boolean;
   borderColor?: string;
@@ -97,12 +109,12 @@ export interface MapElement extends BaseElement {
   lng: number;
   zoom: number;
   mapStyle:
-    | "streets"
-    | "satellite"
-    | "light"
-    | "dark"
-    | "outdoors"
-    | "watercolor";
+  | "streets"
+  | "satellite"
+  | "light"
+  | "dark"
+  | "outdoors"
+  | "watercolor";
   showControls: boolean;
   showMarker: boolean;
   scrollZoom: boolean;
@@ -153,10 +165,38 @@ export interface CountdownElement extends BaseElement {
   completeMessage: string;
 }
 
+// --- Love Story / Timeline ---
+export interface StoryMilestone {
+  id: string;
+  date: string;      // vd: "Tháng 3, 2022" hoặc "14/02/2023"
+  title: string;      // vd: "Lần đầu gặp gỡ"
+  description: string;
+  image?: string;
+}
+
+export interface LoveStoryElement extends BaseElement {
+  type: "loveStory";
+  milestones: StoryMilestone[];
+  layout: "vertical" | "alternating";
+  lineColor: string;
+  dotColor: string;
+  dateColor: string;
+  titleColor: string;
+  textColor: string;
+  bgColor: string;
+  cardBg: string;
+  cardRadius: number;
+  itemGap: number;
+  imageRatio: "square" | "landscape" | "portrait";
+}
+
 export type CanvasElement =
   | TextElement
   | ImageElement
   | FormElement
   | MapElement
   | AlbumElement
-  | CountdownElement;
+  | CountdownElement
+  | LoveStoryElement
+  | VideoElement;
+
