@@ -44,6 +44,7 @@
 
     <div v-if="marquee.visible" class="canvas-marquee" :style="marqueeStyle" />
   </div>
+  <BackgroundMusicPlayer />
 </template>
 
 <script setup lang="ts">
@@ -51,6 +52,7 @@ import { onMounted, onUnmounted, ref, reactive } from "vue";
 import { useEditorStore } from "../../store/editorStore";
 import ElementRenderer from "./ElementRenderer.vue";
 import { createResizeSectionCommand } from "../../core/commands/resizeSectionHeight";
+import BackgroundMusicPlayer from "./BackgroundMusicPlayer.vue"; // 🎵 NEW
 import MultiSelectToolbar from "./MultiSelectToolbar.vue";
 
 const store = useEditorStore();
