@@ -6,7 +6,12 @@
         v-for="item in tabs"
         :key="item.key"
         @click="active = item.key"
-        class="flex flex-col justify-center items-center border-black"
+        :class="[
+          'flex flex-col justify-center items-center border-black transition-colors',
+          active === item.key
+            ? 'active-icon-bar'
+            : 'text-gray-400 hover:text-gray-600',
+        ]"
       >
         <component :is="item.icon" class="w-5 h-5" />
         {{ item.label }}
@@ -40,5 +45,11 @@ const tabs = [
 <style lang="scss" scoped>
 .h-full {
   width: 380px;
+}
+.active-icon-bar {
+  color: $sage;
+  border-right: 2px solid $sage;
+  // border-radius: $radius-sm;
+  padding: 2px;
 }
 </style>

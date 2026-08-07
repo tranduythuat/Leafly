@@ -290,7 +290,20 @@ const sync = () => {
   store.executeCommand(
     createUpdateStyleCommand(store, {
       id: props.element.id,
-      oldData: {},
+      oldData: {
+        address: props.element.address,
+        lat: props.element.lat,
+        lng: props.element.lng,
+        zoom: props.element.zoom,
+        mapStyle: props.element.mapStyle,
+        showControls: props.element.showControls,
+        showMarker: props.element.showMarker,
+        scrollZoom: props.element.scrollZoom,
+        markerTitle: props.element.markerTitle,
+        markerDesc: props.element.markerDesc,
+        borderRadius: props.element.borderRadius,
+        opacity: props.element.opacity,
+      },
       newData: { ...local },
     })
   );

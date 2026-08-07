@@ -22,6 +22,8 @@ import {
   Video,
   QrCode,
   Music2,
+  Minus,
+  MousePointerClick,
 } from "@lucide/vue";
 import { useEditorStore } from "../../../store/editorStore";
 
@@ -36,6 +38,8 @@ const blocks = [
   { key: "video", label: "Video", icon: Video },
   { key: "qrcode", label: "QR Code", icon: QrCode },
   { key: "musicPlayer", label: "Music Player", icon: Music2 },
+  { key: "divider", label: "Divider", icon: Minus },
+  { key: "button", label: "Button", icon: MousePointerClick }, // 👈
 ] as const;
 
 const insert = (
@@ -48,6 +52,8 @@ const insert = (
     | "video"
     | "qrcode"
     | "musicPlayer"
+    | "divider"
+    | "button" // 👈
 ) => {
   const sectionEl = document.querySelector(
     `[data-section-id="${store.activeSectionId}"]`
@@ -72,6 +78,10 @@ const insert = (
       sectionEl?.clientWidth,
       sectionEl?.clientHeight
     );
+  if (key === "divider")
+    store.insertDividerBlock(sectionEl?.clientWidth, sectionEl?.clientHeight);
+  if (key === "button")
+    store.insertButtonBlock(sectionEl?.clientWidth, sectionEl?.clientHeight);
 };
 </script>
 

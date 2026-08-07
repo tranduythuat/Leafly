@@ -9,6 +9,8 @@ import LoveStoryPanel from "./panels/LoveStoryPanel.vue";
 import VideoPanel from "./panels/VideoPanel.vue";
 import QRCodePanel from "./panels/QRCodePanel.vue";
 import MusicPlayerPanel from "./panels/MusicPlayerPanel.vue";
+import DividerPanel from "./panels/DividerPanel.vue";
+import ButtonPanel from "./panels/ButtonPanel.vue";
 
 // ── Config per element type ──
 export interface InspectorMeta {
@@ -130,6 +132,29 @@ const registry = new Map<string, InspectorMeta>([
       badgeColor: "#eef3e8",
       badgeTextColor: "#4A6B4D",
       component: MusicPlayerPanel,
+      shared: { position: true, transform: false, layer: true },
+    },
+  ],
+  [
+    "divider",
+    {
+      label: "Divider",
+      badgeColor: "#f5efe4",
+      badgeTextColor: "#8B7355",
+      component: DividerPanel,
+      // Divider có thể xoay (rotation) nhưng không cần flip/opacity-slider riêng
+      // (opacity đã có sẵn trong DividerPanel's "Appearance" section)
+      shared: { position: true, transform: true, layer: true },
+    },
+  ],
+  [
+    "button",
+    {
+      label: "Button",
+      badgeColor: "#fdeee0",
+      badgeTextColor: "#b5693a",
+      component: ButtonPanel,
+      // Button không cần xoay (transform: false), giống Form/Map
       shared: { position: true, transform: false, layer: true },
     },
   ],

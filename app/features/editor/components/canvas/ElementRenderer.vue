@@ -62,6 +62,8 @@ import LoveStoryElement from "../elements/LoveStoryElement.vue";
 import VideoElement from "../elements/VideoElement.vue";
 import MusicPlayerElement from "../elements/MusicPlayerElement.vue";
 import QRCodeElement from "../elements/QRCodeElement.vue";
+import DividerElement from "../elements/DividerElement.vue";
+import ButtonElement from "../elements/ButtonElement.vue";
 import BoundingBox from "./BoundingBox.vue";
 import LayerPicker from "./LayerPicker.vue";
 import type { LayerPickerItem } from "./LayerPicker.vue";
@@ -197,6 +199,8 @@ const resolveComponent = (el: EditorElement) => {
   if (el.type === "video") return VideoElement;
   if (el.type === "qrcode") return QRCodeElement;
   if (el.type === "musicPlayer") return MusicPlayerElement;
+  if (el.type === "divider") return DividerElement;
+  if (el.type === "button") return ButtonElement; // 👈
 
   return TextElement;
 };
@@ -323,6 +327,25 @@ const buildPickerItems = (elements: EditorElement[]): LayerPickerItem[] => {
         type: "musicPlayer",
         label: el.title || "Music Player",
         zIndex: el.zIndex,
+      };
+    }
+
+    if (el.type === "divider") {
+      return {
+        id: el.id,
+        type: "divider",
+        label: `Divider (${el.variant})`,
+        zIndex: el.zIndex,
+      };
+    }
+
+    if (el.type === "button") {
+      return {
+        id: el.id,
+        type: "button",
+        label: el.label || "Button",
+        zIndex: el.zIndex,
+        color: el.bgColor,
       };
     }
 

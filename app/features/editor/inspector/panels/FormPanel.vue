@@ -719,7 +719,17 @@ const sync = () => {
   store.executeCommand(
     createUpdateStyleCommand(store, {
       id: props.element.id,
-      oldData: {},
+      oldData: {
+        submitColor: props.element.submitColor,
+        action: props.element.action,
+        actionEmail: props.element.actionEmail,
+        actionUrl: props.element.actionUrl,
+        bgColor: props.element.bgColor,
+        borderColor: props.element.borderColor,
+        borderRadius: props.element.borderRadius,
+        showLabels: props.element.showLabels,
+        fieldGap: props.element.fieldGap,
+      },
       newData: {
         ...local,
         fields: local.fields.map((f) => ({

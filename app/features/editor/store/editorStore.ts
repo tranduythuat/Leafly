@@ -724,6 +724,78 @@ export const useEditorStore = defineStore("editor", {
       this.executeCommand(command);
     },
 
+    insertDividerBlock(sectionDOMWidth?: number, sectionDOMHeight?: number) {
+      const section = this.activeSection;
+      if (!section) return;
+
+      const width = 240, height = 32;
+      const sectionWidth = sectionDOMWidth ?? 800;
+      const sectionHeight = sectionDOMHeight ?? section.style?.minHeight ?? 320;
+
+      const element: EditorElement = {
+        id: createElementId(),
+        type: "divider",
+        x: Math.round((sectionWidth - width) / 2),
+        y: Math.round((sectionHeight - height) / 2),
+        width,
+        height,
+        zIndex: getNextZIndex(section),
+        rotation: 0,
+        variant: "ornament",
+        color: "#B5694A",
+        thickness: 1,
+        ornamentIcon: "❖",
+        ornamentSize: 16,
+        opacity: 100,
+      };
+
+      const command = createInsertGenericCommand(this, {
+        sectionId: section.id,
+        element,
+      });
+      this.executeCommand(command);
+    },
+
+    insertButtonBlock(sectionDOMWidth?: number, sectionDOMHeight?: number) {
+      const section = this.activeSection;
+      if (!section) return;
+
+      const width = 200, height = 48;
+      const sectionWidth = sectionDOMWidth ?? 800;
+      const sectionHeight = sectionDOMHeight ?? section.style?.minHeight ?? 320;
+
+      const element: EditorElement = {
+        id: createElementId(),
+        type: "button",
+        x: Math.round((sectionWidth - width) / 2),
+        y: Math.round((sectionHeight - height) / 2),
+        width,
+        height,
+        zIndex: getNextZIndex(section),
+        label: "Click me",
+        action: "link",
+        url: "https://",
+        sectionTarget: "",
+        email: "",
+        phone: "",
+        openInNewTab: true,
+        bgColor: "#B5694A",
+        textColor: "#ffffff",
+        borderRadius: 999,
+        borderWidth: 0,
+        borderColor: "transparent",
+        fontSize: 15,
+        fontWeight: 600,
+        fullWidth: false,
+      };
+
+      const command = createInsertGenericCommand(this, {
+        sectionId: section.id,
+        element,
+      });
+      this.executeCommand(command);
+    },
+
     select(id: string, isMulti = false) {
       const section = this.findSectionByElementId(id);
       if (!section) return;

@@ -1,22 +1,39 @@
 <template>
   <!-- Meta bar -->
   <div class="ip-meta">
-    <div class="ip-meta__thumb" :style="{ backgroundImage: `url(${element.src})` }" />
+    <div
+      class="ip-meta__thumb"
+      :style="{ backgroundImage: `url(${element.src})` }"
+    />
     <div class="ip-meta__info">
       <div class="ip-meta__name">{{ displayName }}</div>
-      <div v-if="naturalSize" class="ip-meta__dims">{{ naturalSize.w }} × {{ naturalSize.h }}px</div>
+      <div v-if="naturalSize" class="ip-meta__dims">
+        {{ naturalSize.w }} × {{ naturalSize.h }}px
+      </div>
     </div>
   </div>
 
   <!-- Replace -->
   <label class="ip-replace-btn">
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-      <polyline points="17 8 12 3 7 8"/>
-      <line x1="12" y1="3" x2="12" y2="15"/>
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+    >
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="17 8 12 3 7 8" />
+      <line x1="12" y1="3" x2="12" y2="15" />
     </svg>
     Replace image
-    <input type="file" accept="image/*" class="ip-hidden" @change="onReplaceFile" />
+    <input
+      type="file"
+      accept="image/*"
+      class="ip-hidden"
+      @change="onReplaceFile"
+    />
   </label>
 
   <!-- Object fit -->
@@ -40,7 +57,9 @@
       type="range"
       label="Opacity"
       :model-value="opacityPct"
-      :min="0" :max="100" :step="1"
+      :min="0"
+      :max="100"
+      :step="1"
       suffix="%"
       @update:model-value="setOpacity($event)"
     />
@@ -48,7 +67,9 @@
       type="range"
       label="Border radius"
       :model-value="(element as any).borderRadius ?? 0"
-      :min="0" :max="100" :step="1"
+      :min="0"
+      :max="100"
+      :step="1"
       suffix="px"
       @update:model-value="patch('borderRadius', $event)"
     />
@@ -56,70 +77,86 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import InsSection from '../shared/InsSection.vue'
-import InsField from '../shared/InsField.vue'
-import { useEditorStore } from '../../store/editorStore'
-import { createUpdateStyleCommand } from '../../core/commands/updateStyle'
-import type { ImageElement } from '../../types'
+import { ref, computed, watch } from "vue";
+import InsSection from "../shared/InsSection.vue";
+import InsField from "../shared/InsField.vue";
+import { useEditorStore } from "../../store/editorStore";
+import { createUpdateStyleCommand } from "../../core/commands/updateStyle";
+import type { ImageElement } from "../../types";
 
-const props = defineProps<{ element: ImageElement }>()
-const store = useEditorStore()
+const props = defineProps<{ element: ImageElement }>();
+const store = useEditorStore();
 
 // ── Natural size ──
-const naturalSize = ref<{ w: number; h: number } | null>(null)
+const naturalSize = ref<{ w: number; h: number } | null>(null);
 
-watch(() => props.element.src, (src) => {
-  if (!src) return
-  const img = new Image()
-  img.onload = () => { naturalSize.value = { w: img.naturalWidth, h: img.naturalHeight } }
-  img.src = src
-}, { immediate: true })
+watch(
+  () => props.element.src,
+  (src) => {
+    if (!src) return;
+    const img = new Image();
+    img.onload = () => {
+      naturalSize.value = { w: img.naturalWidth, h: img.naturalHeight };
+    };
+    img.src = src;
+  },
+  { immediate: true }
+);
 
 const displayName = computed(() => {
-  const src = props.element.src ?? ''
-  return src.startsWith('blob:') ? 'Uploaded image' : src.split('/').pop()?.split('?')[0] ?? 'Image'
-})
+  const src = props.element.src ?? "";
+  return src.startsWith("blob:")
+    ? "Uploaded image"
+    : src.split("/").pop()?.split("?")[0] ?? "Image";
+});
 
 // ── Patch ──
 const patch = (key: string, value: unknown) => {
-  store.executeCommand(createUpdateStyleCommand(store, {
-    id: props.element.id,
-    oldData: { [key]: (props.element as any)[key] },
-    newData: { [key]: value },
-  }))
-}
+  store.executeCommand(
+    createUpdateStyleCommand(store, {
+      id: props.element.id,
+      oldData: { [key]: (props.element as any)[key] },
+      newData: { [key]: value },
+    })
+  );
+};
 
 // ── Replace ──
 const onReplaceFile = (e: Event) => {
-  const input = e.target as HTMLInputElement
-  const file = input.files?.[0]
-  if (!file) return
-  const src = URL.createObjectURL(file)
-  store.updateImageSource(props.element.id, src)
-  input.value = ''
-}
+  const input = e.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+  const src = URL.createObjectURL(file);
+  store.updateImageSource(props.element.id, src);
+  input.value = "";
+};
 
 // ── Object fit ──
 const fits = [
-  { value: 'cover',   label: 'Cover'   },
-  { value: 'contain', label: 'Contain' },
-  { value: 'fill',    label: 'Fill'    },
-]
+  { value: "cover", label: "Cover" },
+  { value: "contain", label: "Contain" },
+  { value: "fill", label: "Fill" },
+];
 
-const currentFit = computed(() => (props.element.style as any)?.objectFit ?? 'cover')
+const currentFit = computed(
+  () => (props.element.style as any)?.objectFit ?? "cover"
+);
 
 const setFit = (fit: string) => {
-  store.executeCommand(createUpdateStyleCommand(store, {
-    id: props.element.id,
-    oldData: { style: props.element.style },
-    newData: { style: { ...props.element.style, objectFit: fit } },
-  }))
-}
+  store.executeCommand(
+    createUpdateStyleCommand(store, {
+      id: props.element.id,
+      oldData: { style: props.element.style },
+      newData: { style: { ...props.element.style, objectFit: fit } },
+    })
+  );
+};
 
 // ── Opacity ──
-const opacityPct = computed(() => Math.round(((props.element as any).opacity ?? 1) * 100))
-const setOpacity = (pct: number) => patch('opacity', pct / 100)
+const opacityPct = computed(() =>
+  Math.round(((props.element as any).opacity ?? 1) * 100)
+);
+const setOpacity = (pct: number) => patch("opacity", pct / 100);
 </script>
 
 <style scoped lang="scss">
@@ -182,7 +219,9 @@ const setOpacity = (pct: number) => patch('opacity', pct / 100)
   }
 }
 
-.ip-hidden { display: none; }
+.ip-hidden {
+  display: none;
+}
 
 /* Fit */
 .ip-fit-row {
@@ -201,7 +240,9 @@ const setOpacity = (pct: number) => patch('opacity', pct / 100)
   cursor: pointer;
   transition: all 0.12s;
 
-  &:hover { background: $cream-dark; }
+  &:hover {
+    background: $cream-dark;
+  }
 
   &--active {
     border-color: $sage;

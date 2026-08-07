@@ -13,7 +13,7 @@ export function useDragResize(
 ) {
   const store = useEditorStore();
   const isResizing = ref(false);
-  const activeResizeHandle = ref<"tl" | "tr" | "bl" | "br" | null>(null);
+  const activeResizeHandle = ref<"tl" | "tr" | "bl" | "br" | "left" | "right" | null>(null);
 
   let startX = 0,
     startY = 0,
@@ -86,10 +86,10 @@ export function useDragResize(
     resizeStartH = 0;
   let resizeStartLeft = 0,
     resizeStartTop = 0;
-  let resizeDir: "tl" | "tr" | "bl" | "br" = "br";
+  let resizeDir: "tl" | "tr" | "bl" | "br" | "left" | "right" = "br";
   const MIN_SIZE = 60;
 
-  const startResize = (e: MouseEvent, dir: "tl" | "tr" | "bl" | "br") => {
+  const startResize = (e: MouseEvent, dir: "tl" | "tr" | "bl" | "br" | "left" | "right") => {
     e.preventDefault();
     resizeDir = dir;
     activeResizeHandle.value = dir;
@@ -103,7 +103,7 @@ export function useDragResize(
     resizeStartTop = element.y;
 
     document.body.style.userSelect = "none";
-    document.body.style.cursor = "nwse-resize";
+    document.body.style.cursor = dir === "left" || dir === "right" ? "ew-resize" : "nwse-resize";
     window.addEventListener("mousemove", onResize);
     window.addEventListener("mouseup", stopResize);
   };
@@ -116,6 +116,21 @@ export function useDragResize(
       newH = resizeStartH;
     let newX = resizeStartLeft,
       newY = resizeStartTop;
+
+    if (resizeDir === "left" || resizeDir === "right") {
+      // Chỉ đổi chiều rộng, giữ nguyên chiều cao/vị trí Y
+      if (resizeDir.includes("r" as never) || resizeDir === "right") newW = resizeStartW + dx;
+      if (resizeDir === "left") {
+        newW = resizeStartW - dx;
+        newX = resizeStartLeft + dx;
+      }
+      newW = Math.max(MIN_SIZE, Math.round(newW));
+      if (resizeDir === "left") newX = resizeStartLeft + (resizeStartW - newW);
+
+      store.move(element.id, newX, resizeStartTop);
+      store.resize(element.id, newW, resizeStartH);
+      return;
+    }
 
     if (resizeDir.includes("r")) newW = resizeStartW + dx;
     if (resizeDir.includes("l")) {
