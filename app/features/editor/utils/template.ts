@@ -80,6 +80,31 @@ export function generateHTML(store: EditorStore) {
             `;
           }
 
+          if (el.type === "button") {
+            const href =
+              el.action === "link" ? (el.url || "#") :
+                el.action === "scroll" ? `#${el.sectionTarget || ""}` :
+                  el.action === "mailto" ? `mailto:${el.email || ""}` :
+                    el.action === "tel" ? `tel:${el.phone || ""}` : "#";
+
+            const target =
+              el.action === "link" && el.openInNewTab
+                ? ' target="_blank" rel="noopener"'
+                : "";
+
+            return `
+            <a href="${href}"${target} style="${baseStyle};
+              display:flex; align-items:center; justify-content:center;
+              text-decoration:none; box-sizing:border-box;
+              background:${el.bgColor}; color:${el.textColor};
+              border-radius:${el.borderRadius}px;
+              border:${el.borderWidth ?? 0}px solid ${el.borderColor ?? "transparent"};
+              font-size:${el.fontSize}px; font-weight:${el.fontWeight};">
+              ${el.label}
+            </a>
+          `;
+          }
+
           return "";
         })
         .join("");

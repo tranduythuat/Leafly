@@ -184,7 +184,16 @@ const sync = () => {
   store.executeCommand(
     createUpdateStyleCommand(store, {
       id: props.element.id,
-      oldData: {},
+      oldData: {
+        src: props.element.src,
+        sourceType: props.element.sourceType,
+        autoplay: props.element.autoplay,
+        loop: props.element.loop,
+        muted: props.element.muted,
+        controls: props.element.controls,
+        borderRadius: props.element.borderRadius,
+        opacity: props.element.opacity,
+      },
       newData: { ...local },
     })
   );

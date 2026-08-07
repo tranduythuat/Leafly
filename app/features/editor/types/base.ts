@@ -223,6 +223,37 @@ export interface QRCodeElement extends BaseElement {
   showLabel: boolean;
 }
 
+export type DividerVariant = "line" | "dashed" | "dotted" | "wave" | "ornament";
+
+export interface DividerElement extends BaseElement {
+  type: "divider";
+  variant: DividerVariant;
+  color: string;
+  thickness: number;       // px, áp dụng cho line/dashed/dotted/wave
+  ornamentIcon: string;    // ký tự trang trí ở giữa khi variant = "ornament", vd "🌿", "❖", "✦"
+  ornamentSize: number;    // font-size px của ornamentIcon
+  opacity: number;         // 0-100
+}
+
+export interface ButtonElement extends BaseElement {
+  type: "button";
+  label: string;
+  action: "link" | "scroll" | "mailto" | "tel";
+  url?: string;           // dùng khi action = "link"
+  sectionTarget?: string; // id section, dùng khi action = "scroll"
+  email?: string;         // dùng khi action = "mailto"
+  phone?: string;         // dùng khi action = "tel"
+  openInNewTab: boolean;
+  bgColor: string;
+  textColor: string;
+  borderColor?: string;
+  borderWidth?: number;
+  borderRadius: number;
+  fontSize: number;
+  fontWeight: number;
+  fullWidth: boolean;
+}
+
 export type CanvasElement =
   | TextElement
   | ImageElement
@@ -233,5 +264,7 @@ export type CanvasElement =
   | LoveStoryElement
   | VideoElement
   | QRCodeElement
-  | MusicPlayerElement;
+  | MusicPlayerElement
+  | DividerElement
+  | ButtonElement;
 

@@ -305,7 +305,19 @@ const sync = () => {
   store.executeCommand(
     createUpdateStyleCommand(store, {
       id: props.element.id,
-      oldData: {},
+      oldData: {
+        milestones: props.element.milestones,
+        layout: props.element.layout,
+        lineColor: props.element.lineColor,
+        dotColor: props.element.dotColor,
+        dateColor: props.element.dateColor,
+        titleColor: props.element.titleColor,
+        textColor: props.element.textColor,
+        cardBg: props.element.cardBg,
+        cardRadius: props.element.cardRadius,
+        itemGap: props.element.itemGap,
+        imageRatio: props.element.imageRatio,
+      },
       newData: {
         ...local,
         milestones: local.milestones.map((m) => ({ ...m })),

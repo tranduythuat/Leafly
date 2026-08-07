@@ -201,7 +201,22 @@ const sync = () => {
   store.executeCommand(
     createUpdateStyleCommand(store, {
       id: props.element.id,
-      oldData: {},
+      oldData: {
+        targetDate: props.element.targetDate,
+        label: props.element.label,
+        showDays: props.element.showDays,
+        showHours: props.element.showHours,
+        showMinutes: props.element.showMinutes,
+        showSeconds: props.element.showSeconds,
+        numberColor: props.element.numberColor,
+        labelColor: props.element.labelColor,
+        accentColor: props.element.accentColor,
+        layout: props.element.layout,
+        borderRadius: props.element.borderRadius,
+        bgColor: props.element.bgColor,
+        onComplete: props.element.onComplete,
+        completeMessage: props.element.completeMessage,
+      },
       newData: { ...local },
     })
   );
